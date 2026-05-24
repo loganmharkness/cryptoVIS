@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0a0b0f;
+  --bg-secondary: #0f1117;
+  --bg-card: #13151c;
+  --bg-elevated: #1a1d27;
+  --border: #1e2130;
+  --border-bright: #2a2e42;
+  --text-primary: #e2e8f0;
+  --text-secondary: #8892a4;
+  --text-muted: #4a5568;
+  --accent-green: #00ff88;
+  --accent-blue: #0ea5e9;
+  --accent-purple: #a855f7;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 136, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(0, 255, 136, 0.7); }
+}
+
+@keyframes shift-row {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-20px); opacity: 0.5; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes cell-flip {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(90deg); background: rgba(245, 158, 11, 0.4); }
+  100% { transform: rotateY(0deg); }
+}
+
+@keyframes xor-flash {
+  0% { background: transparent; }
+  40% { background: rgba(14, 165, 233, 0.4); }
+  100% { background: transparent; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes number-tick {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bit-change {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+.animate-cell-flip { animation: cell-flip 0.4s ease-in-out; }
+.animate-xor-flash { animation: xor-flash 0.5s ease-out; }
+.animate-shift-row { animation: shift-row 0.5s ease-in-out; }
+.animate-slide-in { animation: slide-in 0.25s ease-out forwards; }
+.animate-number-tick { animation: number-tick 0.2s ease-out forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-bit-change { animation: bit-change 0.3s ease-out; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
