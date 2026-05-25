@@ -1,0 +1,117 @@
+/* === Page header =============================================== */
+.aes-header { margin-bottom: 24px; }
+.aes-title { font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0; font-family: 'JetBrains Mono', monospace; }
+.aes-subtitle { color: var(--text-secondary); margin-top: 6px; font-size: 14px; }
+
+/* === WhyBox ==================================================== */
+.aes-why-box { border-left: 3px solid rgba(245,158,11,0.6); background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; padding: 12px 14px; margin-top: 10px; }
+.aes-why-box__title { font-size: 11px; font-weight: 600; color: var(--accent-amber); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.aes-why-box__body { font-size: 12px; color: var(--text-secondary); line-height: 1.7; margin: 0; }
+
+/* === HexCell ================================================== */
+.aes-hex-cell {
+  width: 52px; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+  user-select: none;
+}
+.aes-hex-cell--sub-bytes    { background: rgba(245,158,11,0.25); color: #f59e0b; border-color: rgba(245,158,11,0.33); animation: cell-flip 0.45s ease-in-out; }
+.aes-hex-cell--add-round-key { background: rgba(14,165,233,0.25); color: #0ea5e9; border-color: rgba(14,165,233,0.33); animation: xor-flash 0.5s ease-out; }
+.aes-hex-cell--shift-rows   { background: rgba(168,85,247,0.20); color: #a855f7; border-color: rgba(168,85,247,0.33); animation: shift-row 0.5s ease-in-out; }
+.aes-hex-cell--mix-columns  { background: rgba(0,255,136,0.20);  color: #00ff88; border-color: rgba(0,255,136,0.33);  animation: xor-flash 0.55s ease-out; }
+.aes-hex-cell--initial      { background: rgba(255,255,255,0.1); color: #8892a4; border-color: rgba(136,146,164,0.33); }
+
+/* === StateGrid ================================================ */
+.aes-state-grid { display: grid; grid-template-columns: repeat(4, 52px); grid-template-rows: repeat(4, 52px); gap: 4px; }
+.aes-col-labels { display: flex; gap: 4px; margin-top: 4px; }
+.aes-col-label { width: 52px; text-align: center; font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.aes-row-labels { display: flex; gap: 4px; margin-bottom: 4px; }
+.aes-row-label { width: 52px; text-align: center; font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+/* === RoundKeyDisplay ========================================== */
+.aes-round-key { margin-top: 12px; }
+.aes-round-key__label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.aes-round-key__grid { display: grid; grid-template-columns: repeat(4, 52px); gap: 4px; }
+.aes-round-key__cell { width: 52px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.2); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-blue); }
+
+/* === RoundTimeline ============================================ */
+.aes-round-timeline { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.aes-round-pill { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-family: 'JetBrains Mono', monospace; background: var(--bg-elevated); color: var(--text-muted); border: 1px solid transparent; transition: all 0.2s; }
+.aes-round-pill--active { background: rgba(0,255,136,0.15); color: var(--accent-green); border-color: rgba(0,255,136,0.3); }
+
+/* === Input panel ============================================== */
+.aes-input-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.aes-input-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.aes-input-field { flex: 1; min-width: 200px; }
+.aes-input-field-header { display: flex; gap: 6px; margin-bottom: 4px; align-items: center; }
+.aes-input-label { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.aes-input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.aes-btn-mode { padding: 2px 7px; border-radius: 4px; font-size: 11px; cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.aes-btn-mode--active { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); color: var(--accent-green); }
+.aes-btn-random { display: flex; align-items: center; gap: 6px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.aes-btn-run { display: flex; align-items: center; gap: 6px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: var(--accent-green); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+
+/* === Playback controls ======================================= */
+.aes-controls { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.aes-controls__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.aes-speed-label { font-size: 12px; color: var(--text-muted); }
+.aes-step-count { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+.aes-btn-nav { display: flex; align-items: center; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 7px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+.aes-btn-nav:disabled { color: var(--text-muted); cursor: default; }
+
+.aes-btn-speed { padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.aes-btn-speed--active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--accent-purple); }
+
+.aes-btn-play { display: flex; align-items: center; gap: 6px; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: var(--accent-blue); padding: 7px 14px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.aes-btn-play:disabled { cursor: default; }
+.aes-btn-play--playing { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+
+/* === Step progress bar ======================================= */
+.aes-step-bar { display: flex; gap: 2px; margin-bottom: 16px; }
+.aes-step-bar__seg { flex: 1; height: 4px; border-radius: 2px; cursor: pointer; background: var(--bg-elevated); transition: background 0.2s; }
+
+/* === Main viz grid =========================================== */
+.aes-viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.aes-state-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.aes-state-card__header { margin-bottom: 12px; }
+.aes-state-card__header-row { display: flex; align-items: center; gap: 8px; }
+.aes-op-dot { width: 10px; height: 10px; border-radius: 50%; }
+.aes-op-label { font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.aes-state-card__placeholder { font-size: 14px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+/* Placeholder grid */
+.aes-placeholder-grid { display: grid; grid-template-columns: repeat(4, 52px); grid-template-rows: repeat(4, 52px); gap: 4px; }
+.aes-placeholder-cell { width: 52px; height: 52px; border-radius: 6px; background: var(--bg-elevated); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-muted); }
+
+/* Info panel */
+.aes-info-col { display: flex; flex-direction: column; gap: 12px; }
+.aes-op-info { border-radius: 12px; padding: 16px; }
+.aes-op-info-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); margin-bottom: 6px; }
+.aes-op-info__name { font-size: 15px; font-weight: 600; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+.aes-op-info__explainer { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+.aes-op-info__placeholder { font-size: 13px; color: var(--text-muted); margin: 0; }
+
+/* Legend */
+.aes-legend { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.aes-legend__title { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+.aes-legend__row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.aes-legend__dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.aes-legend__label { font-size: 12px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+
+/* Ciphertext */
+.aes-ciphertext { background: var(--bg-card); border: 1px solid rgba(0,255,136,0.2); border-radius: 12px; padding: 14px; }
+.aes-ciphertext__label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+.aes-ciphertext__value { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-green); word-break: break-all; line-height: 1.6; }
+
+/* Byte diff counter */
+.aes-byte-diff { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+.aes-byte-diff__count { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.aes-byte-diff__label { font-size: 12px; color: var(--text-secondary); }

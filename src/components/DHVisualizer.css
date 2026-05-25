@@ -1,0 +1,116 @@
+/* === Page header =============================================== */
+.dh-header { margin-bottom: 24px; }
+.dh-title { font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0; font-family: 'JetBrains Mono', monospace; }
+.dh-subtitle { color: var(--text-secondary); margin-top: 6px; font-size: 14px; }
+
+/* === WhyBox ==================================================== */
+.dh-why-box { border-left: 3px solid rgba(245,158,11,0.6); background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; padding: 12px 14px; margin-top: 12px; }
+.dh-why-box__title { font-size: 11px; font-weight: 600; color: var(--accent-amber); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.dh-why-box__body { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0; }
+
+/* === Tag ======================================================= */
+.dh-tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.dh-tag--green  { background: rgba(0,255,136,0.15);  color: var(--accent-green); }
+.dh-tag--blue   { background: rgba(14,165,233,0.15); color: var(--accent-blue); }
+.dh-tag--purple { background: rgba(168,85,247,0.15); color: var(--accent-purple); }
+.dh-tag--amber  { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+
+/* === ValueRow ================================================== */
+.dh-value-row { border-radius: 8px; padding: 12px 14px; }
+.dh-value-row--green  { background: rgba(0,255,136,0.08);  border: 1px solid rgba(0,255,136,0.22); }
+.dh-value-row--blue   { background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.22); }
+.dh-value-row--purple { background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.22); }
+.dh-value-row--amber  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); }
+.dh-value-row--animate { animation: fadeIn 0.4s ease-out; }
+.dh-value-row__label { font-size: 11px; color: var(--text-muted); margin-bottom: 5px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 5px; }
+.dh-value-row__val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+.dh-value-row__val--green  { color: var(--accent-green); }
+.dh-value-row__val--blue   { color: var(--accent-blue); }
+.dh-value-row__val--purple { color: var(--accent-purple); }
+.dh-value-row__val--amber  { color: var(--accent-amber); }
+.dh-value-row__sub { font-size: 11px; color: var(--text-muted); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+
+/* === WireParam ================================================= */
+.dh-wire-param { border-radius: 6px; padding: 8px 12px; }
+.dh-wire-param--amber { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); }
+.dh-wire-param--green { background: rgba(0,255,136,0.06);  border: 1px solid rgba(0,255,136,0.2); }
+.dh-wire-param--blue  { background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.2); }
+.dh-wire-param--animate { animation: fadeIn 0.4s ease-out; }
+.dh-wire-param__label { font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; }
+.dh-wire-param__val { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; }
+.dh-wire-param__val--amber { color: var(--accent-amber); }
+.dh-wire-param__val--green { color: var(--accent-green); }
+.dh-wire-param__val--blue  { color: var(--accent-blue); }
+
+/* === Controls ================================================== */
+.dh-controls { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.dh-controls__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.dh-speed-label { font-size: 12px; color: var(--text-muted); }
+
+.dh-btn-regen { display: flex; align-items: center; gap: 6px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: var(--accent-green); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+
+.dh-btn-nav { display: flex; align-items: center; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.dh-btn-nav:disabled { color: var(--text-muted); cursor: default; }
+
+.dh-btn-speed { padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.dh-btn-speed--active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--accent-purple); }
+
+.dh-btn-play { display: flex; align-items: center; gap: 6px; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: var(--accent-blue); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.dh-btn-play:disabled { cursor: default; }
+.dh-btn-play--playing { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+
+/* === Step progress bar ======================================= */
+.dh-step-bar { display: flex; gap: 4px; margin-bottom: 20px; }
+.dh-step-bar__seg { flex: 1; height: 4px; border-radius: 2px; cursor: pointer; background: var(--bg-elevated); transition: background 0.3s; }
+.dh-step-bar__seg--done { background: var(--accent-green); }
+
+/* === Step explainer ========================================== */
+.dh-step-card { background: var(--bg-card); border: 1px solid var(--border-bright); border-radius: 12px; padding: 20px; margin-bottom: 20px; animation: fadeIn 0.3s ease-out; }
+.dh-step-card__header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.dh-step-card__title { font-size: 15px; font-weight: 600; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+.dh-step-card__explainer { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+
+/* === 3-column viz ============================================ */
+.dh-viz-grid { display: grid; grid-template-columns: 1fr 160px 1fr; gap: 12px; align-items: start; }
+
+/* Alice panel */
+.dh-alice-panel { background: var(--bg-card); border: 1px solid rgba(0,255,136,0.15); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 260px; }
+.dh-alice-panel__header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.dh-alice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+.dh-alice-label { font-size: 14px; font-weight: 600; color: var(--accent-green); font-family: 'JetBrains Mono', monospace; }
+.dh-waiting { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; opacity: 0.4; padding-top: 8px; }
+
+/* Wire panel */
+.dh-wire-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-height: 260px; }
+.dh-wire-panel__title { font-size: 10px; font-weight: 600; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; margin-bottom: 2px; }
+.dh-wire-divider { border-top: 1px solid var(--border); margin: 2px 0; }
+.dh-wire-empty { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; opacity: 0.3; text-align: center; margin-top: 12px; }
+
+/* Wire public key boxes */
+.dh-wire-key { border-radius: 6px; padding: 8px 10px; }
+.dh-wire-key--green { background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.2); }
+.dh-wire-key--blue  { background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.2); }
+.dh-wire-key--animate { animation: fadeIn 0.4s ease-out; }
+.dh-wire-key__label { font-size: 10px; font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; }
+.dh-wire-key__label--green { color: var(--accent-green); }
+.dh-wire-key__label--blue  { color: var(--accent-blue); }
+.dh-wire-key__val { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; }
+.dh-wire-key__val--green { color: var(--accent-green); }
+.dh-wire-key__val--blue  { color: var(--accent-blue); }
+
+/* Bob panel */
+.dh-bob-panel { background: var(--bg-card); border: 1px solid rgba(14,165,233,0.15); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 260px; }
+.dh-bob-panel__header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.dh-bob-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-blue); box-shadow: 0 0 8px var(--accent-blue); }
+.dh-bob-label { font-size: 14px; font-weight: 600; color: var(--accent-blue); font-family: 'JetBrains Mono', monospace; }
+
+/* === Shared secret banner ==================================== */
+.dh-secret-banner { margin-top: 16px; background: rgba(168,85,247,0.07); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 24px; text-align: center; animation: fadeIn 0.4s ease-out; }
+.dh-secret-banner__label { font-size: 12px; color: var(--accent-purple); font-family: 'JetBrains Mono', monospace; font-weight: 600; margin-bottom: 10px; letter-spacing: 0.5px; text-transform: uppercase; }
+.dh-secret-banner__value { font-family: 'JetBrains Mono', monospace; font-size: 40px; font-weight: 700; color: var(--accent-purple); margin-bottom: 10px; letter-spacing: 2px; }
+.dh-secret-banner__formula { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
+.dh-secret-banner__desc { font-size: 13px; color: var(--text-secondary); max-width: 540px; margin: 0 auto; line-height: 1.6; }
+
+/* === Start prompt ============================================ */
+.dh-start-prompt { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+.dh-start-prompt__key { color: var(--accent-blue); }

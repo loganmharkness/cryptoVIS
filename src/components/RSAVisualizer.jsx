@@ -1,72 +1,47 @@
+import './RSAVisualizer.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, SkipForward, SkipBack, RefreshCw, Lock, Unlock, KeyRound } from 'lucide-react';
 import { generateRSASteps, buildRSAStepsFromPrimes, rsaEncrypt, rsaDecrypt, isPrime } from '../utils/rsa';
+import { parseHash, setHashParam } from '../utils/urlState';
 
 const SPEEDS = { slow: 4000, medium: 2000, fast: 800 };
+
+function WhyBox({ children }) {
+  return (
+    <div className="rsa-why-box">
+      <div className="rsa-why-box__title">Why this matters</div>
+      <p className="rsa-why-box__body">{children}</p>
+    </div>
+  );
+}
 
 function Tooltip({ text, children }) {
   const [show, setShow] = useState(false);
   return (
-    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+    <span className="rsa-tooltip"
       onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       {children}
-      {show && (
-        <span style={{
-          position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
-          background: '#1a1d27', border: '1px solid var(--border-bright)',
-          color: 'var(--text-primary)', padding: '6px 10px', borderRadius: '6px',
-          fontSize: '12px', whiteSpace: 'nowrap', zIndex: 100,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-          fontFamily: 'Inter, sans-serif', fontWeight: 400,
-        }}>{text}</span>
-      )}
+      {show && <span className="rsa-tooltip__popup">{text}</span>}
     </span>
   );
 }
 
 function Tag({ children, color = 'green' }) {
-  const colors = {
-    green: 'rgba(0,255,136,0.15)',
-    blue: 'rgba(14,165,233,0.15)',
-    purple: 'rgba(168,85,247,0.15)',
-    amber: 'rgba(245,158,11,0.15)',
-  };
-  const textColors = {
-    green: 'var(--accent-green)',
-    blue: 'var(--accent-blue)',
-    purple: 'var(--accent-purple)',
-    amber: 'var(--accent-amber)',
-  };
   return (
-    <span style={{
-      background: colors[color],
-      color: textColors[color],
-      padding: '2px 8px',
-      borderRadius: '4px',
-      fontSize: '11px',
-      fontFamily: 'JetBrains Mono, monospace',
-      fontWeight: '600',
-    }}>{children}</span>
+    <span className={`rsa-tag rsa-tag--${color}`}>{children}</span>
   );
 }
 
 function BigNum({ value, label, color = 'green', animate }) {
   return (
-    <div style={{
-      background: 'var(--bg-elevated)',
-      border: `1px solid ${color === 'green' ? 'rgba(0,255,136,0.2)' : color === 'blue' ? 'rgba(14,165,233,0.2)' : color === 'purple' ? 'rgba(168,85,247,0.2)' : 'rgba(245,158,11,0.2)'}`,
-      borderRadius: '8px',
-      padding: '12px 16px',
-      animation: animate ? 'fadeIn 0.4s ease-out' : undefined,
-    }}>
-      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-      <div style={{
-        fontFamily: 'JetBrains Mono, monospace',
-        fontSize: String(value).length > 15 ? '11px' : '14px',
-        color: color === 'green' ? 'var(--accent-green)' : color === 'blue' ? 'var(--accent-blue)' : color === 'purple' ? 'var(--accent-purple)' : 'var(--accent-amber)',
-        wordBreak: 'break-all',
-        lineHeight: '1.5',
-      }}>{value}</div>
+    <div className={`rsa-bignum rsa-bignum--${color}${animate ? ' rsa-bignum--animate' : ''}`}>
+      <div className="rsa-bignum__label">{label}</div>
+      <div
+        className={`rsa-bignum__value rsa-bignum__value--${color}`}
+        style={{ fontSize: String(value).length > 15 ? '11px' : '14px' }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -74,24 +49,21 @@ function BigNum({ value, label, color = 'green', animate }) {
 function PrimeCandidates({ candidates, found }) {
   const visible = candidates.slice(0, 12);
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-      {visible.map((c, i) => (
-        <div key={i} style={{
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '12px',
-          padding: '3px 8px',
-          borderRadius: '4px',
-          background: c.value === found ? 'rgba(0,255,136,0.2)' : c.isPrime ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
-          color: c.value === found ? 'var(--accent-green)' : c.isPrime ? 'var(--accent-amber)' : '#6b7280',
-          border: `1px solid ${c.value === found ? 'rgba(0,255,136,0.3)' : 'transparent'}`,
-          transition: 'all 0.2s',
-          animation: 'fadeIn 0.3s ease-out',
-        }}>
-          {String(c.value)}
-          {c.value === found && <span style={{ marginLeft: '4px' }}>✓</span>}
-          {c.value !== found && !c.isPrime && <span style={{ marginLeft: '4px', color: '#ef4444' }}>✗</span>}
-        </div>
-      ))}
+    <div className="rsa-prime-candidates">
+      {visible.map((c, i) => {
+        const stateClass = c.value === found
+          ? 'rsa-prime-cand--found'
+          : c.isPrime
+            ? 'rsa-prime-cand--prime'
+            : 'rsa-prime-cand--rejected';
+        return (
+          <div key={i} className={`rsa-prime-cand ${stateClass}`}>
+            {String(c.value)}
+            {c.value === found && <span style={{ marginLeft: '4px' }}>✓</span>}
+            {c.value !== found && !c.isPrime && <span className="rsa-prime-cand__cross">✗</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -99,26 +71,23 @@ function PrimeCandidates({ candidates, found }) {
 function EuclidTable({ steps }) {
   if (!steps || steps.length === 0) return null;
   return (
-    <div style={{ overflowX: 'auto', marginTop: '12px' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' }}>
+    <div className="rsa-euclid-wrap">
+      <table className="rsa-euclid-table">
         <thead>
-          <tr style={{ borderBottom: '1px solid var(--border)' }}>
+          <tr>
             {['Step', 'Quotient', 'Remainder', 's', 't'].map(h => (
-              <th key={h} style={{ padding: '6px 8px', color: 'var(--text-muted)', fontWeight: '500', textAlign: 'left' }}>{h}</th>
+              <th key={h}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {steps.slice(0, 8).map((row, i) => (
-            <tr key={i} style={{
-              borderBottom: '1px solid rgba(255,255,255,0.03)',
-              animation: `fadeIn 0.3s ease-out ${i * 80}ms both`,
-            }}>
-              <td style={{ padding: '5px 8px', color: 'var(--text-muted)' }}>{i + 1}</td>
-              <td style={{ padding: '5px 8px', color: 'var(--accent-amber)' }}>{String(row.q)}</td>
-              <td style={{ padding: '5px 8px', color: 'var(--accent-blue)' }}>{String(row.r)}</td>
-              <td style={{ padding: '5px 8px', color: 'var(--accent-purple)' }}>{String(row.s)}</td>
-              <td style={{ padding: '5px 8px', color: 'var(--accent-green)' }}>{String(row.t)}</td>
+            <tr key={i} className="rsa-euclid-row" style={{ animation: `fadeIn 0.3s ease-out ${i * 80}ms both` }}>
+              <td className="rsa-euclid-td-step">{i + 1}</td>
+              <td className="rsa-euclid-td-q">{String(row.q)}</td>
+              <td className="rsa-euclid-td-r">{String(row.r)}</td>
+              <td className="rsa-euclid-td-s">{String(row.s)}</td>
+              <td className="rsa-euclid-td-t">{String(row.t)}</td>
             </tr>
           ))}
         </tbody>
@@ -138,13 +107,23 @@ const STEP_TITLES = [
 ];
 
 const STEP_EXPLAINERS = [
-  'We need two large prime numbers p and q. A prime number has no divisors other than 1 and itself.',
-  'We pick a second prime q, different from p. The security of RSA depends on the difficulty of finding p and q given only their product n.',
-  'n = p × q is the RSA modulus. It is public. Its size determines the key strength.',
-  'φ(n) (Euler\'s totient) counts integers from 1 to n that are coprime with n. For RSA, φ(n) = (p-1)(q-1).',
-  'e is the public exponent. It must be coprime with φ(n), meaning gcd(e, φ(n)) = 1. Common choice: 65537.',
-  'd is the private exponent — the modular inverse of e mod φ(n). The Extended Euclidean Algorithm finds it.',
-  'Public key: (e, n) — share this freely. Private key: (d, n) — keep this secret. Encrypt: m^e mod n. Decrypt: c^d mod n.',
+  'RSA requires two large prime numbers. We start by finding p. A prime has exactly two divisors: 1 and itself. We test candidates using the Miller-Rabin primality test, which confirms primality probabilistically in milliseconds. In production RSA, p would be 1024-2048 bits long. We use small primes here so the arithmetic stays readable.',
+  'We pick a second prime q, distinct from p. If p = q, then n = p^2, which is far easier to factor. In real RSA, p and q are also chosen to be roughly the same bit-length and to pass additional checks: not too close together, not sharing small factors with common values, to close off known attacks.',
+  'n = p * q is the RSA modulus. It appears in both the public key and the private key. All encryption and decryption happen modulo n, meaning results are always reduced to the range [0, n-1]. The bit-length of n is what people mean when they say "RSA-2048".',
+  'Euler\'s totient φ(n) counts how many integers from 1 to n share no common factor with n. For a product of two distinct primes: φ(n) = (p-1)(q-1). This is the size of the multiplicative group we work in and governs which exponents produce valid encryption and decryption relationships.',
+  'e must satisfy gcd(e, φ(n)) = 1 so that a modular inverse d exists. The value 65537 = 2^16 + 1 is the near-universal choice in practice. It is prime, has only two 1-bits in binary (making exponentiation fast via square-and-multiply), and is large enough to resist small-exponent attacks.',
+  'd is defined by e * d ≡ 1 (mod φ(n)), meaning d is the modular inverse of e. The Extended Euclidean Algorithm finds it in O(log n) steps. d is the private exponent: applying it undoes what e did. It must stay secret forever because it can decrypt any message ever encrypted to this public key.',
+  'Public key (e, n): share it freely. Private key (d, n): never transmit it. Encrypt: c = m^e mod n. Decrypt: m = c^d mod n. The math works because e * d = 1 mod φ(n), so raising m to e then d gives m^(ed) = m^(1 + k*φ(n)) = m, by Fermat\'s little theorem.',
+];
+
+const STEP_WHY = [
+  'Primes are the raw material of RSA security. Multiplying two large primes together is trivial and instant. Factoring the result back into its components is believed to require exponential time with the best known algorithms. This asymmetry -- cheap in one direction, astronomically expensive in the other -- is what lets you publish a key that anyone can encrypt with but only you can decrypt.',
+  'Real RSA keys use primes with 512-2048 bits each. No computer has ever successfully factored a properly generated 2048-bit RSA modulus. The RSA Factoring Challenge offered cash prizes for factoring specific numbers; RSA-2048 remains unfactored as of 2024. Using two primes of similar size, with no small factors, is what keeps the key in that safe zone.',
+  'Anyone who can factor n into p and q can compute φ(n) = (p-1)(q-1), then compute d from e, and decrypt everything ever sent to this key. The entire security of RSA reduces to one question: is factoring n computationally hard? For 2048-bit n, with current algorithms (General Number Field Sieve) and hardware, the answer is yes -- it would take longer than the age of the universe.',
+  'φ(n) is the secret structure inside n. If an attacker knew φ(n), they could compute d directly without factoring n. But computing φ(n) from n alone is believed to be as hard as factoring n itself. This is not obvious -- it is a non-trivial mathematical result that makes the whole RSA security argument coherent.',
+  '65537 is the standard public exponent in virtually every RSA implementation -- OpenSSL, Java, .NET, Python. Small values like e=3 have a known weakness: if the same unpadded message is sent to 3 different recipients, the cube root of the product of the three ciphertexts reveals the plaintext directly. Larger e values, combined with proper padding (OAEP), eliminate this class of attack.',
+  'd is the most sensitive value in RSA. Anyone who obtains d can: decrypt all past and future messages, forge signatures, and factor n (there is an efficient algorithm to factor n given e and d). In practice, private keys are stored in hardware security modules (HSMs) or encrypted at rest. Key ceremonies for root certificate authorities involve physical security controls and multiple witnesses.',
+  'RSA solved the key distribution problem that blocked secure communication for centuries. Before asymmetric cryptography (1970s), two parties had to meet in person or trust a courier to share a secret before communicating privately. With RSA, Bob can send Alice a secure message without ever having spoken to her -- he just uses her public key, which she posted on her website.',
 ];
 
 export default function RSAVisualizer() {
@@ -186,6 +165,8 @@ export default function RSAVisualizer() {
     setEncrypted(null);
     setDecrypted(null);
     setPlaying(false);
+    setHashParam('p', null);
+    setHashParam('q', null);
   }, []);
 
   const generateFromCustom = useCallback(() => {
@@ -198,9 +179,30 @@ export default function RSAVisualizer() {
     setEncrypted(null);
     setDecrypted(null);
     setPlaying(false);
+    setHashParam('p', customP.trim());
+    setHashParam('q', customQ.trim());
   }, [customP, customQ, canApplyCustom]);
 
-  useEffect(() => { generate(); }, []);
+  // On mount: load custom primes from URL if present, else generate random.
+  useEffect(() => {
+    const { params } = parseHash();
+    const urlP = params.get('p');
+    const urlQ = params.get('q');
+    if (urlP && urlQ) {
+      setCustomMode(true);
+      setCustomP(urlP);
+      setCustomQ(urlQ);
+      try {
+        const p = BigInt(urlP);
+        const q = BigInt(urlQ);
+        if (isPrime(p) && isPrime(q) && p !== q) {
+          setData(buildRSAStepsFromPrimes(p, q));
+          return;
+        }
+      } catch {}
+    }
+    generate();
+  }, []);
 
   useEffect(() => {
     if (playing) {
@@ -231,79 +233,60 @@ export default function RSAVisualizer() {
     setDecrypted(m);
   };
 
-  const visible = step >= 0;
-
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>
-          RSA Key Generation
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '14px' }}>
+      <div className="rsa-header">
+        <h1 className="rsa-title">RSA Key Generation</h1>
+        <p className="rsa-subtitle">
           Step-by-step walkthrough of how RSA public/private keys are generated from two prime numbers.
         </p>
       </div>
 
       {/* Controls */}
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '16px', marginBottom: '20px',
-        display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center',
-      }}>
-        <button onClick={generate} style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.3)',
-          color: 'var(--accent-green)', padding: '8px 16px', borderRadius: '8px',
-          cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-        }}>
+      <div className="rsa-controls">
+        <button onClick={generate} className="rsa-btn-regen">
           <RefreshCw size={14} /> New Keys
         </button>
 
-        <button onClick={() => setCustomMode(m => !m)} style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          background: customMode ? 'rgba(168,85,247,0.15)' : 'var(--bg-elevated)',
-          border: `1px solid ${customMode ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
-          color: customMode ? 'var(--accent-purple)' : 'var(--text-secondary)',
-          padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-        }}>
+        <button
+          onClick={() => setCustomMode(m => !m)}
+          className={`rsa-btn-custom-toggle${customMode ? ' rsa-btn-custom-toggle--active' : ''}`}
+        >
           <KeyRound size={14} /> Custom Primes
         </button>
 
-        <button onClick={() => setStep(s => Math.max(-1, s - 1))} disabled={step <= -1} style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-          color: step <= -1 ? 'var(--text-muted)' : 'var(--text-primary)',
-          padding: '8px 12px', borderRadius: '8px', cursor: step <= -1 ? 'default' : 'pointer', fontSize: '13px',
-        }}>
+        <button
+          onClick={() => setStep(s => Math.max(-1, s - 1))}
+          disabled={step <= -1}
+          className="rsa-btn-nav"
+        >
           <SkipBack size={14} /> Back
         </button>
 
-        <button onClick={() => setStep(s => Math.min(maxStep, s + 1))} disabled={step >= maxStep} style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-          color: step >= maxStep ? 'var(--text-muted)' : 'var(--text-primary)',
-          padding: '8px 12px', borderRadius: '8px', cursor: step >= maxStep ? 'default' : 'pointer', fontSize: '13px',
-        }}>
+        <button
+          onClick={() => setStep(s => Math.min(maxStep, s + 1))}
+          disabled={step >= maxStep}
+          className="rsa-btn-nav"
+        >
           Next <SkipForward size={14} />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Speed:</span>
+        <div className="rsa-controls__right">
+          <span className="rsa-speed-label">Speed:</span>
           {['slow', 'medium', 'fast'].map(s => (
-            <button key={s} onClick={() => setSpeed(s)} style={{
-              padding: '4px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
-              background: speed === s ? 'rgba(168,85,247,0.15)' : 'transparent',
-              border: `1px solid ${speed === s ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
-              color: speed === s ? 'var(--accent-purple)' : 'var(--text-muted)',
-            }}>{s}</button>
+            <button
+              key={s}
+              onClick={() => setSpeed(s)}
+              className={`rsa-btn-speed${speed === s ? ' rsa-btn-speed--active' : ''}`}
+            >
+              {s}
+            </button>
           ))}
-          <button onClick={() => setPlaying(p => !p)} disabled={step >= maxStep} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: playing ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)',
-            border: `1px solid ${playing ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`,
-            color: playing ? '#ef4444' : 'var(--accent-blue)',
-            padding: '8px 16px', borderRadius: '8px', cursor: step >= maxStep ? 'default' : 'pointer', fontSize: '13px', fontWeight: '500',
-          }}>
+          <button
+            onClick={() => setPlaying(p => !p)}
+            disabled={step >= maxStep}
+            className={`rsa-btn-play${playing ? ' rsa-btn-play--playing' : ''}`}
+          >
             {playing ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Play</>}
           </button>
         </div>
@@ -311,111 +294,82 @@ export default function RSAVisualizer() {
 
       {/* Custom prime inputs */}
       {customMode && (
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid rgba(168,85,247,0.25)',
-          borderRadius: '12px', padding: '16px', marginBottom: '20px',
-          animation: 'fadeIn 0.2s ease-out',
-        }}>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--accent-purple)', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="rsa-custom-panel">
+          <div className="rsa-custom-panel__title">
             <KeyRound size={13} /> Enter your own prime numbers
           </div>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div className="rsa-custom-panel__inputs">
             {[
               { label: 'p', value: customP, set: setCustomP, status: pStatus },
               { label: 'q', value: customQ, set: setCustomQ, status: qStatus },
             ].map(({ label, value, set, status }) => {
               const isValid = status === 'valid';
               const isError = status !== 'empty' && status !== 'valid';
-              const borderColor = isValid ? 'rgba(0,255,136,0.4)' : isError ? 'rgba(239,68,68,0.4)' : 'var(--border)';
               const statusText = {
                 empty: '',
                 invalid: 'Not a valid integer',
-                'too-small': 'Must be ≥ 2',
+                'too-small': 'Must be >= 2',
                 'not-prime': 'Not a prime number',
                 valid: 'Prime ✓',
               }[status];
-              const statusColor = isValid ? 'var(--accent-green)' : '#ef4444';
               return (
-                <div key={label} style={{ flex: '1', minWidth: '160px' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
-                    Prime {label}
-                  </div>
+                <div key={label} className="rsa-custom-panel__field">
+                  <div className="rsa-custom-panel__field-label">Prime {label}</div>
                   <input
                     value={value}
                     onChange={e => set(e.target.value)}
                     placeholder={`e.g. ${label === 'p' ? '61' : '53'}`}
-                    style={{
-                      width: '100%', background: 'var(--bg-elevated)',
-                      border: `1px solid ${borderColor}`,
-                      borderRadius: '6px', padding: '8px 12px',
-                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace', fontSize: '14px',
-                      outline: 'none', transition: 'border-color 0.2s',
-                    }}
+                    className={`rsa-prime-input${isValid ? ' rsa-prime-input--valid' : isError ? ' rsa-prime-input--error' : ''}`}
                   />
                   {statusText && (
-                    <div style={{ fontSize: '11px', color: statusColor, marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
+                    <div className={`rsa-prime-status${isValid ? ' rsa-prime-status--valid' : ' rsa-prime-status--error'}`}>
                       {statusText}
                     </div>
                   )}
                 </div>
               );
             })}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: sameValue || (pStatus !== 'empty' || qStatus !== 'empty') ? '0' : '0' }}>
+            <div className="rsa-custom-panel__apply">
               <button
                 onClick={generateFromCustom}
                 disabled={!canApplyCustom}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: canApplyCustom ? 'rgba(168,85,247,0.15)' : 'var(--bg-elevated)',
-                  border: `1px solid ${canApplyCustom ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
-                  color: canApplyCustom ? 'var(--accent-purple)' : 'var(--text-muted)',
-                  padding: '8px 16px', borderRadius: '8px',
-                  cursor: canApplyCustom ? 'pointer' : 'default', fontSize: '13px', fontWeight: '500',
-                  marginTop: '20px',
-                }}
+                className={`rsa-btn-apply${canApplyCustom ? ' rsa-btn-apply--ready' : ''}`}
               >
                 <RefreshCw size={13} /> Generate
               </button>
             </div>
           </div>
           {sameValue && (
-            <div style={{ marginTop: '10px', fontSize: '12px', color: '#ef4444', fontFamily: 'JetBrains Mono, monospace' }}>
-              p and q must be different primes
-            </div>
+            <div className="rsa-custom-panel__error">p and q must be different primes</div>
           )}
         </div>
       )}
 
       {/* Step progress bar */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
+      <div className="rsa-step-bar">
         {STEP_TITLES.map((title, i) => (
-          <div key={i} onClick={() => setStep(i)} style={{
-            flex: 1, height: '4px', borderRadius: '2px', cursor: 'pointer',
-            background: i <= step ? 'var(--accent-green)' : 'var(--bg-elevated)',
-            transition: 'background 0.3s',
-          }} title={title} />
+          <div
+            key={i}
+            onClick={() => setStep(i)}
+            className={`rsa-step-bar__seg${i <= step ? ' rsa-step-bar__seg--done' : ''}`}
+            title={title}
+          />
         ))}
       </div>
 
       {/* Current step display */}
       {step >= 0 && step < STEP_TITLES.length && (
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border-bright)',
-          borderRadius: '12px', padding: '20px', marginBottom: '20px',
-          animation: 'fadeIn 0.3s ease-out',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+        <div className="rsa-step-card">
+          <div className="rsa-step-card__header">
             <Tag color="green">Step {step + 1}/{STEP_TITLES.length}</Tag>
-            <span style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace' }}>
-              {STEP_TITLES[step]}
-            </span>
+            <span className="rsa-step-card__title">{STEP_TITLES[step]}</span>
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '16px' }}>
-            {STEP_EXPLAINERS[step]}
-          </p>
+          <p className="rsa-step-card__explainer">{STEP_EXPLAINERS[step]}</p>
+          <WhyBox>{STEP_WHY[step]}</WhyBox>
+          <div className="rsa-step-card__spacer" />
 
           {data && (
-            <div style={{ display: 'grid', gap: '12px' }}>
+            <div className="rsa-step-grid">
               {step === 0 && (
                 <>
                   <PrimeCandidates candidates={data.pCandidates} found={data.p} />
@@ -425,25 +379,25 @@ export default function RSAVisualizer() {
               {step === 1 && (
                 <>
                   <PrimeCandidates candidates={data.qCandidates} found={data.q} />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="rsa-two-col">
                     <BigNum value={String(data.p)} label="p" color="green" />
                     <BigNum value={String(data.q)} label="q — chosen prime" color="blue" animate />
                   </div>
                 </>
               )}
               {step === 2 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: '8px', alignItems: 'center' }}>
+                <div className="rsa-step2-grid">
                   <BigNum value={String(data.p)} label="p" color="green" />
-                  <span style={{ color: 'var(--text-muted)', fontSize: '20px', textAlign: 'center' }}>×</span>
+                  <span className="rsa-step2-op">×</span>
                   <BigNum value={String(data.q)} label="q" color="blue" />
-                  <span style={{ color: 'var(--text-muted)', fontSize: '20px', textAlign: 'center' }}>=</span>
+                  <span className="rsa-step2-op">=</span>
                   <BigNum value={String(data.n)} label="n = p × q (modulus)" color="amber" animate />
                 </div>
               )}
               {step === 3 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="rsa-two-col">
                   <div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'JetBrains Mono, monospace' }}>
+                    <div className="rsa-formula-hint">
                       φ(n) = (p−1) × (q−1) = ({String(data.p - 1n)}) × ({String(data.q - 1n)})
                     </div>
                     <BigNum value={String(data.phi)} label="φ(n) — Euler's totient" color="purple" animate />
@@ -452,17 +406,17 @@ export default function RSAVisualizer() {
                 </div>
               )}
               {step === 4 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="rsa-two-col">
                   <BigNum value={String(data.e)} label="e — public exponent" color="blue" animate />
                   <BigNum value={String(data.phi)} label="φ(n)" color="purple" />
-                  <div style={{ gridColumn: '1/-1', background: 'var(--bg-elevated)', borderRadius: '8px', padding: '10px 14px', fontSize: '12px', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <div className="rsa-coprime-note">
                     gcd({String(data.e)}, {String(data.phi)}) = 1  ✓  coprime
                   </div>
                 </div>
               )}
               {step === 5 && (
                 <>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <div className="rsa-euclid-finding">
                     Finding d such that: e × d ≡ 1 (mod φ(n))
                   </div>
                   <EuclidTable steps={data.euclidSteps} />
@@ -470,28 +424,22 @@ export default function RSAVisualizer() {
                 </>
               )}
               {step === 6 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div style={{
-                    background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.2)',
-                    borderRadius: '10px', padding: '16px',
-                  }}>
-                    <div style={{ color: 'var(--accent-green)', fontWeight: '600', marginBottom: '10px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div className="rsa-key-grid">
+                  <div className="rsa-key-box rsa-key-box--public">
+                    <div className="rsa-key-box__header rsa-key-box__header--public">
                       <Unlock size={14} /> Public Key
                     </div>
                     <BigNum value={String(data.e)} label="e (public exponent)" color="green" />
-                    <div style={{ marginTop: '8px' }}>
+                    <div className="rsa-key-box__secondary">
                       <BigNum value={String(data.n)} label="n (modulus)" color="green" />
                     </div>
                   </div>
-                  <div style={{
-                    background: 'rgba(168,85,247,0.05)', border: '1px solid rgba(168,85,247,0.2)',
-                    borderRadius: '10px', padding: '16px',
-                  }}>
-                    <div style={{ color: 'var(--accent-purple)', fontWeight: '600', marginBottom: '10px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div className="rsa-key-box rsa-key-box--private">
+                    <div className="rsa-key-box__header rsa-key-box__header--private">
                       <Lock size={14} /> Private Key
                     </div>
                     <BigNum value={String(data.d)} label="d (private exponent)" color="purple" />
-                    <div style={{ marginTop: '8px' }}>
+                    <div className="rsa-key-box__secondary">
                       <BigNum value={String(data.n)} label="n (modulus)" color="purple" />
                     </div>
                   </div>
@@ -502,65 +450,52 @@ export default function RSAVisualizer() {
         </div>
       )}
 
-      {/* Encrypt/decrypt demo — shown when keys are revealed */}
+      {/* Encrypt/decrypt demo */}
       {step >= 6 && data && (
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: '12px', padding: '20px',
-          animation: 'fadeIn 0.4s ease-out',
-        }}>
-          <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '16px', fontFamily: 'JetBrains Mono, monospace' }}>
-            Mini Encrypt / Decrypt Demo
+        <div className="rsa-demo-card">
+          <div className="rsa-demo-title">Mini Encrypt / Decrypt Demo</div>
+          <div className="rsa-demo-hint">
+            Enter an integer m where 0 &lt;= m &lt; {String(data.n)}. Cipher: c = m^e mod n. Recover: m = c^d mod n.
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-            Enter an integer m where 0 ≤ m &lt; {String(data.n)}. Cipher: c = m^e mod n. Recover: m = c^d mod n.
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '16px' }}>
+          <div className="rsa-demo-inputs">
             <div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>Message (integer)</div>
+              <div className="rsa-demo-field-label">Message (integer)</div>
               <input
                 value={msgInput}
                 onChange={e => setMsgInput(e.target.value)}
-                style={{
-                  background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                  borderRadius: '6px', padding: '8px 12px', color: 'var(--text-primary)',
-                  fontFamily: 'JetBrains Mono, monospace', fontSize: '14px', width: '160px',
-                }}
+                className="rsa-demo-input"
               />
             </div>
-            <button onClick={handleEncrypt} style={{
-              background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.3)',
-              color: 'var(--accent-green)', padding: '8px 16px', borderRadius: '8px',
-              cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px',
-            }}>
+            <button onClick={handleEncrypt} className="rsa-btn-encrypt">
               <Lock size={13} /> Encrypt
             </button>
             {encrypted != null && (
-              <button onClick={handleDecrypt} style={{
-                background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)',
-                color: 'var(--accent-purple)', padding: '8px 16px', borderRadius: '8px',
-                cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px',
-              }}>
+              <button onClick={handleDecrypt} className="rsa-btn-decrypt">
                 <Unlock size={13} /> Decrypt
               </button>
             )}
           </div>
 
           {encrypted != null && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', animation: 'fadeIn 0.3s ease-out' }}>
+            <div className="rsa-demo-result">
               <BigNum value={msgInput} label="Plaintext m" color="blue" />
-              <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>c = m^e mod n</div>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent-green)', fontSize: '11px' }}>e = {String(data.e)}</div>
+              <div className="rsa-demo-arrow">
+                <div className="rsa-demo-arrow__formula">c = m^e mod n</div>
+                <div className="rsa-demo-arrow__key rsa-demo-arrow__key--green">e = {String(data.e)}</div>
               </div>
               <BigNum value={String(encrypted)} label="Ciphertext c" color="amber" animate />
               {decrypted != null && (
                 <>
-                  <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>m = c^d mod n</div>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent-purple)', fontSize: '11px' }}>d = {String(data.d)}</div>
+                  <div className="rsa-demo-arrow">
+                    <div className="rsa-demo-arrow__formula">m = c^d mod n</div>
+                    <div className="rsa-demo-arrow__key rsa-demo-arrow__key--purple">d = {String(data.d)}</div>
                   </div>
-                  <BigNum value={String(decrypted)} label={`Decrypted ${decrypted === BigInt(msgInput) ? '✓ matches!' : '✗ mismatch'}`} color={decrypted === BigInt(msgInput) ? 'green' : 'red'} animate />
+                  <BigNum
+                    value={String(decrypted)}
+                    label={`Decrypted ${decrypted === BigInt(msgInput) ? '✓ matches!' : '✗ mismatch'}`}
+                    color={decrypted === BigInt(msgInput) ? 'green' : 'red'}
+                    animate
+                  />
                 </>
               )}
             </div>
@@ -569,11 +504,8 @@ export default function RSAVisualizer() {
       )}
 
       {step < 0 && (
-        <div style={{
-          textAlign: 'center', padding: '60px 20px',
-          color: 'var(--text-muted)', fontSize: '14px',
-        }}>
-          Press <strong style={{ color: 'var(--accent-blue)' }}>Play</strong> or <strong style={{ color: 'var(--accent-blue)' }}>Next</strong> to begin the walkthrough.
+        <div className="rsa-start-prompt">
+          Press <strong className="rsa-start-prompt__key">Play</strong> or <strong className="rsa-start-prompt__key">Next</strong> to begin the walkthrough.
         </div>
       )}
     </div>

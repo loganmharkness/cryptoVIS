@@ -1,0 +1,93 @@
+/* === Page header =============================================== */
+.hash-header { margin-bottom: 24px; }
+.hash-title { font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0; font-family: 'JetBrains Mono', monospace; }
+.hash-subtitle { color: var(--text-secondary); margin-top: 6px; font-size: 14px; }
+
+/* === BitGrid ================================================== */
+.hash-bit-grid { }
+.hash-bit-grid__label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+.hash-bit-grid__cells { display: grid; grid-template-columns: repeat(32, 1fr); gap: 2px; width: 100%; }
+.hash-bit { aspect-ratio: 1; border-radius: 2px; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; }
+.hash-bit--differs-1 { background: #ef444499; border-color: rgba(239,68,68,0.4); animation: bit-change 0.3s ease-out; }
+.hash-bit--differs-0 { background: #ef444433; border-color: rgba(239,68,68,0.4); animation: bit-change 0.3s ease-out; }
+.hash-bit--same-1-green { background: rgba(0,255,136,0.7); }
+.hash-bit--same-1-blue  { background: rgba(14,165,233,0.7); }
+.hash-bit--same-0 { background: var(--bg-elevated); }
+
+/* === HashDisplay ============================================== */
+.hash-display { background: var(--bg-elevated); border-radius: 8px; padding: 10px 12px; }
+.hash-display--green { border: 1px solid rgba(0,255,136,0.15); }
+.hash-display--blue  { border: 1px solid rgba(14,165,233,0.15); }
+.hash-display__label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.hash-display__hex { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.5px; line-height: 1.8; word-break: break-all; }
+.hash-display--empty { color: var(--text-muted); }
+.hash-hex-char { transition: color 0.15s; }
+.hash-hex-char--differs      { color: #ef4444; font-weight: 700; }
+.hash-hex-char--same-green   { color: var(--accent-green); font-weight: 400; }
+.hash-hex-char--same-blue    { color: var(--accent-blue); font-weight: 400; }
+
+/* === InputBox ================================================= */
+.hash-input-box { display: flex; flex-direction: column; gap: 8px; }
+.hash-input-box__label { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.hash-textarea { background: var(--bg-elevated); border-radius: 8px; padding: 10px 12px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; resize: vertical; outline: none; width: 100%; line-height: 1.5; }
+.hash-textarea--green { border: 1px solid rgba(0,255,136,0.2); }
+.hash-textarea--blue  { border: 1px solid rgba(14,165,233,0.2); }
+.hash-textarea--green:focus { border-color: rgba(0,255,136,0.5); }
+.hash-textarea--blue:focus  { border-color: rgba(14,165,233,0.5); }
+
+/* === Live SHA-256 section ===================================== */
+.hash-live-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.hash-live-section__title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.hash-live-section__desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.6; }
+.hash-live-input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; margin-bottom: 12px; }
+.hash-live-result { }
+.hash-live-hex { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent-green); word-break: break-all; line-height: 1.8; letter-spacing: 1px; animation: fadeIn 0.1s ease-out; }
+.hash-live-bit-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+.hash-live-bits { display: grid; grid-template-columns: repeat(32, 1fr); gap: 2px; }
+.hash-live-bit { aspect-ratio: 1; border-radius: 2px; transition: background 0.1s; }
+.hash-live-bit--on  { background: rgba(0,255,136,0.7); }
+.hash-live-bit--off { background: var(--bg-elevated); }
+.hash-live-placeholder { font-size: 13px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+/* === Avalanche section ======================================= */
+.hash-avalanche-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.hash-avalanche-section__title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.hash-avalanche-section__desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6; }
+.hash-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+/* Diff stats */
+.hash-diff-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; animation: fadeIn 0.2s ease-out; }
+.hash-stat-box { background: var(--bg-elevated); border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+.hash-stat-box--flex { flex: 1; display: flex; align-items: center; gap: 12px; }
+.hash-stat__value { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.hash-stat__value--red    { color: #ef4444; }
+.hash-stat__value--amber  { color: var(--accent-amber); }
+.hash-stat__value--green  { color: var(--accent-green); }
+.hash-stat__value--blue   { color: var(--accent-blue); }
+.hash-stat__label { font-size: 11px; color: var(--text-muted); }
+.hash-meter-track { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-card); overflow: hidden; }
+.hash-meter-fill { height: 100%; border-radius: 4px; transition: width 0.2s ease-out, background 0.2s; }
+.hash-meter-fill--red   { background: #ef4444; }
+.hash-meter-fill--amber { background: var(--accent-amber); }
+.hash-meter-fill--green { background: var(--accent-green); }
+.hash-meter-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+/* Hash displays + bit grids */
+.hash-displays-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.hash-bit-grids { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hash-legend { margin-top: 12px; padding: 10px 14px; background: var(--bg-elevated); border-radius: 8px; font-size: 12px; color: var(--text-secondary); }
+.hash-legend__red   { color: #ef4444; font-weight: 600; }
+.hash-legend__green { color: var(--accent-green); }
+.hash-legend__dark  { color: var(--text-muted); }
+
+/* === How SHA-256 works ======================================= */
+.hash-explainer-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.hash-explainer-section__title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+.hash-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.hash-info-card { background: var(--bg-elevated); border-radius: 8px; padding: 14px; }
+.hash-info-card__title { font-size: 12px; font-weight: 600; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+.hash-info-card__body { font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+
+/* === Why hashing matters ===================================== */
+.hash-why-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.hash-why-section__title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }

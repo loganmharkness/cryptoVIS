@@ -1,0 +1,113 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.layout__sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.layout__logo-wrap {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.layout__logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.layout__logo-badge {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #00ff88, #0ea5e9);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: #000;
+}
+
+.layout__logo-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.layout__logo-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.layout__nav {
+  padding: 12px 8px;
+  flex: 1;
+}
+
+.nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.nav-btn:hover:not(.nav-btn--active) {
+  background: rgba(255,255,255,0.04);
+}
+
+.nav-btn--active {
+  background: rgba(0,255,136,0.08);
+  border-left-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.nav-btn__label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nav-btn__desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.layout__footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.layout__footer-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.layout__main {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}

@@ -1,6 +1,8 @@
+import './AESVisualizer.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, SkipForward, SkipBack, RefreshCw, Shuffle } from 'lucide-react';
 import { aesEncryptSteps, hexToBytes, stringToBytes, bytesToHex } from '../utils/aes';
+import { parseHash, setHashParam } from '../utils/urlState';
 
 const SPEEDS = { slow: 3500, medium: 1800, fast: 700 };
 
@@ -20,53 +22,44 @@ const OP_COLORS = {
   mixColumns: '#00ff88',
 };
 
-const OP_EXPLAINERS = {
-  initial: 'The plaintext bytes are arranged into a 4×4 state matrix (column-major order). Each cell shows one byte in hex.',
-  addRoundKey: 'Each byte of the state is XORed with the corresponding byte of the round key. This mixes in the key material.',
-  subBytes: 'Each byte is replaced by its substitute in the AES S-box — a fixed 16×16 lookup table. This provides non-linearity (confusion).',
-  shiftRows: 'Row 0 stays. Row 1 shifts left by 1. Row 2 by 2. Row 3 by 3. This provides diffusion across columns.',
-  mixColumns: 'Each column is treated as a polynomial over GF(2⁸) and multiplied by a fixed matrix. Spreads bits across the column.',
+const OP_CELL_CLASS = {
+  subBytes: 'aes-hex-cell--sub-bytes',
+  addRoundKey: 'aes-hex-cell--add-round-key',
+  shiftRows: 'aes-hex-cell--shift-rows',
+  mixColumns: 'aes-hex-cell--mix-columns',
+  initial: 'aes-hex-cell--initial',
 };
 
-function HexCell({ value, prevValue, op, row, col, animKey }) {
-  const changed = prevValue !== undefined && value !== prevValue;
-  const baseColor = OP_COLORS[op] || '#8892a4';
+const OP_EXPLAINERS = {
+  initial: 'The 16-byte plaintext block is loaded into a 4x4 state matrix in column-major order: bytes fill column 0 top-to-bottom, then column 1, and so on. Every AES operation transforms this grid in place. After all 10 rounds the bytes are read back out in the same column-major order to produce the 16-byte ciphertext block.',
+  addRoundKey: 'Every byte in the state is XORed (bitwise exclusive-or) with the corresponding byte of the current round key. XOR is its own inverse: (a XOR k) XOR k = a. Round keys are derived from the original 128-bit key via the AES key schedule, which expands one 128-bit key into 11 different 128-bit round keys -- one per round plus the initial one.',
+  subBytes: 'Each byte is independently replaced using the AES S-box: a 256-entry lookup table where every input maps to a specific output. The S-box is constructed from modular inversion in GF(2^8) followed by an affine transformation. It has no fixed points (no byte maps to itself) and no opposite fixed points (no byte maps to its bitwise complement).',
+  shiftRows: 'The bytes of each row are cyclically shifted left by the row index: row 0 stays put, row 1 shifts left by 1 position, row 2 by 2, row 3 by 3. Bytes that were in the same column are now spread across 4 different columns -- exactly the cross-column mixing that MixColumns needs to operate across the full state.',
+  mixColumns: 'Each column of 4 bytes is treated as a degree-3 polynomial over GF(2^8) and multiplied by a fixed polynomial modulo x^4 + 1. The result: each output byte is an XOR-combination of all 4 input bytes with specific multiplication coefficients. Change one input byte and all 4 output bytes change.',
+};
 
-  const getBg = () => {
-    if (!changed) return 'var(--bg-elevated)';
-    if (op === 'subBytes') return 'rgba(245,158,11,0.25)';
-    if (op === 'addRoundKey') return 'rgba(14,165,233,0.25)';
-    if (op === 'shiftRows') return 'rgba(168,85,247,0.20)';
-    if (op === 'mixColumns') return 'rgba(0,255,136,0.20)';
-    return 'rgba(255,255,255,0.1)';
-  };
+const OP_WHY = {
+  initial: 'AES always works on fixed 128-bit blocks. For messages longer than 16 bytes, a block cipher mode (CBC, CTR, GCM) chains blocks together and handles padding. The 4x4 matrix layout is not just visual -- ShiftRows and MixColumns are specifically designed around this 2D structure to achieve maximum diffusion across the full state in the minimum number of rounds.',
+  addRoundKey: 'Without AddRoundKey, AES would be a public permutation: deterministic, key-independent, and invertible by anyone. This is the only step that introduces secret material into the computation. Everything else (SubBytes, ShiftRows, MixColumns) is public knowledge -- AddRoundKey is what turns a scrambler into a cipher. It is applied at the start, end, and between every round.',
+  subBytes: 'SubBytes provides non-linearity, the cryptographic property called "confusion". Without it, AES would be entirely linear and vulnerable to linear cryptanalysis: an attacker could model the cipher as a system of linear equations over GF(2) and solve for the key with far less work than brute force. The S-box was engineered to maximize resistance to both linear and differential cryptanalysis simultaneously.',
+  shiftRows: 'Without ShiftRows, each column of the state would be processed independently by MixColumns -- giving 4 separate 32-bit block ciphers each with a 32-bit key subspace. That would be trivially breakable by brute force. ShiftRows forces bytes from different columns to mix, enabling the "wide trail" design strategy where after just 2 rounds every output byte depends on every input byte.',
+  mixColumns: 'MixColumns is the primary diffusion engine of AES. Combined with ShiftRows it implements the wide-trail strategy: after 2 complete rounds every output bit depends on every input bit, and after 4 rounds the differential branch number is maximized. This is why 10 rounds provides an enormous security margin -- each additional round makes differential and linear attacks exponentially harder to execute.',
+};
 
-  const getAnim = () => {
-    if (!changed) return undefined;
-    if (op === 'subBytes') return 'cell-flip 0.45s ease-in-out';
-    if (op === 'addRoundKey') return 'xor-flash 0.5s ease-out';
-    if (op === 'shiftRows') return 'shift-row 0.5s ease-in-out';
-    if (op === 'mixColumns') return 'xor-flash 0.55s ease-out';
-    return undefined;
-  };
-
+function WhyBox({ children }) {
   return (
-    <div
-      key={animKey}
-      style={{
-        width: '52px', height: '52px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        borderRadius: '6px',
-        background: getBg(),
-        border: `1px solid ${changed ? baseColor + '55' : 'var(--border)'}`,
-        fontFamily: 'JetBrains Mono, monospace',
-        fontSize: '13px',
-        color: changed ? baseColor : 'var(--text-primary)',
-        animation: getAnim(),
-        transition: 'background 0.3s, color 0.3s, border-color 0.3s',
-        userSelect: 'none',
-      }}
-    >
+    <div className="aes-why-box">
+      <div className="aes-why-box__title">Why this matters</div>
+      <p className="aes-why-box__body">{children}</p>
+    </div>
+  );
+}
+
+function HexCell({ value, prevValue, op, animKey }) {
+  const changed = prevValue !== undefined && value !== prevValue;
+  const cellClass = changed ? (OP_CELL_CLASS[op] || 'aes-hex-cell--initial') : '';
+  return (
+    <div key={animKey} className={`aes-hex-cell${cellClass ? ' ' + cellClass : ''}`}>
       {value.toString(16).padStart(2, '0')}
     </div>
   );
@@ -75,12 +68,7 @@ function HexCell({ value, prevValue, op, row, col, animKey }) {
 function StateGrid({ state, prevState, op, stepKey }) {
   return (
     <div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 52px)',
-        gridTemplateRows: 'repeat(4, 52px)',
-        gap: '4px',
-      }}>
+      <div className="aes-state-grid">
         {state.map((row, r) =>
           row.map((byte, c) => (
             <HexCell
@@ -95,12 +83,9 @@ function StateGrid({ state, prevState, op, stepKey }) {
           ))
         )}
       </div>
-      {/* Row labels */}
-      <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+      <div className="aes-col-labels">
         {[0,1,2,3].map(c => (
-          <div key={c} style={{ width: '52px', textAlign: 'center', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-            col {c}
-          </div>
+          <div key={c} className="aes-col-label">col {c}</div>
         ))}
       </div>
     </div>
@@ -110,21 +95,14 @@ function StateGrid({ state, prevState, op, stepKey }) {
 function RoundKeyDisplay({ roundKey }) {
   if (!roundKey) return null;
   return (
-    <div style={{ marginTop: '12px' }}>
-      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>Round Key (XOR mask)</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 52px)', gap: '4px' }}>
+    <div className="aes-round-key">
+      <div className="aes-round-key__label">Round Key (XOR mask)</div>
+      <div className="aes-round-key__grid">
         {Array.from({length:4}, (_,r) =>
           Array.from({length:4}, (_,c) => roundKey[c*4+r]).map((b, c) => (
-            <div key={`rk-${r}-${c}`} style={{
-              width: '52px', height: '28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: '4px',
-              background: 'rgba(14,165,233,0.1)',
-              border: '1px solid rgba(14,165,233,0.2)',
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '11px',
-              color: 'var(--accent-blue)',
-            }}>{b.toString(16).padStart(2,'0')}</div>
+            <div key={`rk-${r}-${c}`} className="aes-round-key__cell">
+              {b.toString(16).padStart(2,'0')}
+            </div>
           ))
         )}
       </div>
@@ -133,7 +111,6 @@ function RoundKeyDisplay({ roundKey }) {
 }
 
 function RoundTimeline({ steps, currentIdx }) {
-  // Group steps into rounds for the progress display
   const rounds = [];
   let cur = { round: 0, ops: [] };
   let roundNum = 0;
@@ -153,7 +130,6 @@ function RoundTimeline({ steps, currentIdx }) {
   }
   rounds.push(cur);
 
-  // Map step index to round
   let stepCounter = 0;
   const stepRound = [];
   for (const r of rounds) {
@@ -163,18 +139,9 @@ function RoundTimeline({ steps, currentIdx }) {
   const activeRound = stepRound[currentIdx] ?? 0;
 
   return (
-    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '12px' }}>
+    <div className="aes-round-timeline">
       {rounds.map((r, i) => (
-        <div key={i} style={{
-          padding: '3px 8px',
-          borderRadius: '4px',
-          fontSize: '11px',
-          fontFamily: 'JetBrains Mono, monospace',
-          background: i === activeRound ? 'rgba(0,255,136,0.15)' : 'var(--bg-elevated)',
-          color: i === activeRound ? 'var(--accent-green)' : 'var(--text-muted)',
-          border: `1px solid ${i === activeRound ? 'rgba(0,255,136,0.3)' : 'transparent'}`,
-          transition: 'all 0.2s',
-        }}>
+        <div key={i} className={`aes-round-pill${i === activeRound ? ' aes-round-pill--active' : ''}`}>
           {i === 0 ? 'Init' : `R${i}`}
         </div>
       ))}
@@ -183,9 +150,9 @@ function RoundTimeline({ steps, currentIdx }) {
 }
 
 export default function AESVisualizer() {
-  const [plaintextMode, setPlaintextMode] = useState('text'); // 'text' | 'hex'
-  const [plainInput, setPlainInput] = useState('Hello, CryptoVis');
-  const [keyInput, setKeyInput] = useState('2b7e151628aed2a6abf7158809cf4f3c');
+  const [plaintextMode, setPlaintextMode] = useState(() => parseHash().params.get('mode') ?? 'text');
+  const [plainInput, setPlainInput] = useState(() => parseHash().params.get('plain') ?? 'Hello, CryptoVis');
+  const [keyInput, setKeyInput] = useState(() => parseHash().params.get('key') ?? '2b7e151628aed2a6abf7158809cf4f3c');
   const [steps, setSteps] = useState(null);
   const [ciphertext, setCiphertext] = useState(null);
   const [stepIdx, setStepIdx] = useState(-1);
@@ -210,6 +177,10 @@ export default function AESVisualizer() {
   }, [plainInput, keyInput, plaintextMode]);
 
   useEffect(() => { runAES(); }, []);
+
+  useEffect(() => { setHashParam('plain', plainInput); }, [plainInput]);
+  useEffect(() => { setHashParam('key', keyInput); }, [keyInput]);
+  useEffect(() => { setHashParam('mode', plaintextMode); }, [plaintextMode]);
 
   useEffect(() => {
     if (playing && steps) {
@@ -236,123 +207,94 @@ export default function AESVisualizer() {
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>
-          AES-128 Block Cipher
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '14px' }}>
-          Visualize all 10 rounds of AES-128 encryption. Each operation on the 4×4 state matrix is animated step by step.
+      <div className="aes-header">
+        <h1 className="aes-title">AES-128 Block Cipher</h1>
+        <p className="aes-subtitle">
+          Visualize all 10 rounds of AES-128 encryption. Each operation on the 4x4 state matrix is animated step by step.
         </p>
       </div>
 
       {/* Input panel */}
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '16px', marginBottom: '16px',
-      }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
-          <div style={{ flex: '1', minWidth: '200px' }}>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>Plaintext</span>
+      <div className="aes-input-panel">
+        <div className="aes-input-row">
+          <div className="aes-input-field">
+            <div className="aes-input-field-header">
+              <span className="aes-input-label">Plaintext</span>
               {['text','hex'].map(m => (
-                <button key={m} onClick={() => setPlaintextMode(m)} style={{
-                  padding: '2px 7px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer',
-                  background: plaintextMode === m ? 'rgba(0,255,136,0.1)' : 'transparent',
-                  border: `1px solid ${plaintextMode === m ? 'rgba(0,255,136,0.3)' : 'var(--border)'}`,
-                  color: plaintextMode === m ? 'var(--accent-green)' : 'var(--text-muted)',
-                }}>{m}</button>
+                <button
+                  key={m}
+                  onClick={() => setPlaintextMode(m)}
+                  className={`aes-btn-mode${plaintextMode === m ? ' aes-btn-mode--active' : ''}`}
+                >
+                  {m}
+                </button>
               ))}
             </div>
             <input
               value={plainInput}
               onChange={e => setPlainInput(e.target.value)}
               placeholder={plaintextMode === 'hex' ? '32 hex chars (16 bytes)' : 'up to 16 chars'}
-              style={{
-                width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                borderRadius: '6px', padding: '8px 12px', color: 'var(--text-primary)',
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '13px',
-              }}
+              className="aes-input"
             />
           </div>
-          <div style={{ flex: '1', minWidth: '200px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>128-bit Key (hex)</div>
+          <div className="aes-input-field">
+            <div className="aes-input-label" style={{ marginBottom: '4px' }}>128-bit Key (hex)</div>
             <input
               value={keyInput}
               onChange={e => setKeyInput(e.target.value)}
               placeholder="32 hex chars"
-              style={{
-                width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                borderRadius: '6px', padding: '8px 12px', color: 'var(--text-primary)',
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '13px',
-              }}
+              className="aes-input"
             />
           </div>
-          <button onClick={randomize} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-            color: 'var(--text-secondary)', padding: '8px 14px', borderRadius: '8px',
-            cursor: 'pointer', fontSize: '13px',
-          }}>
+          <button onClick={randomize} className="aes-btn-random">
             <Shuffle size={13} /> Random
           </button>
-          <button onClick={runAES} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.3)',
-            color: 'var(--accent-green)', padding: '8px 16px', borderRadius: '8px',
-            cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-          }}>
+          <button onClick={runAES} className="aes-btn-run">
             <RefreshCw size={13} /> Run AES
           </button>
         </div>
       </div>
 
       {/* Playback controls */}
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '12px 16px', marginBottom: '16px',
-        display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center',
-      }}>
-        <button onClick={() => setStepIdx(i => Math.max(-1, i - 1))} disabled={stepIdx <= -1} style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-          color: stepIdx <= -1 ? 'var(--text-muted)' : 'var(--text-primary)',
-          padding: '7px 12px', borderRadius: '7px', cursor: stepIdx <= -1 ? 'default' : 'pointer', fontSize: '13px',
-        }}>
+      <div className="aes-controls">
+        <button
+          onClick={() => setStepIdx(i => Math.max(-1, i - 1))}
+          disabled={stepIdx <= -1}
+          className="aes-btn-nav"
+        >
           <SkipBack size={13} /> Back
         </button>
 
-        <button onClick={() => setStepIdx(i => Math.min(maxIdx, i + 1))} disabled={!steps || stepIdx >= maxIdx} style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-          color: !steps || stepIdx >= maxIdx ? 'var(--text-muted)' : 'var(--text-primary)',
-          padding: '7px 12px', borderRadius: '7px', cursor: !steps || stepIdx >= maxIdx ? 'default' : 'pointer', fontSize: '13px',
-        }}>
+        <button
+          onClick={() => setStepIdx(i => Math.min(maxIdx, i + 1))}
+          disabled={!steps || stepIdx >= maxIdx}
+          className="aes-btn-nav"
+        >
           Next <SkipForward size={13} />
         </button>
 
         {steps && (
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+          <div className="aes-step-count">
             {stepIdx >= 0 ? `${stepIdx + 1} / ${steps.length}` : `— / ${steps.length}`} steps
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Speed:</span>
+        <div className="aes-controls__right">
+          <span className="aes-speed-label">Speed:</span>
           {['slow','medium','fast'].map(s => (
-            <button key={s} onClick={() => setSpeed(s)} style={{
-              padding: '4px 10px', borderRadius: '5px', fontSize: '11px', cursor: 'pointer',
-              background: speed === s ? 'rgba(168,85,247,0.15)' : 'transparent',
-              border: `1px solid ${speed === s ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
-              color: speed === s ? 'var(--accent-purple)' : 'var(--text-muted)',
-            }}>{s}</button>
+            <button
+              key={s}
+              onClick={() => setSpeed(s)}
+              className={`aes-btn-speed${speed === s ? ' aes-btn-speed--active' : ''}`}
+            >
+              {s}
+            </button>
           ))}
-          <button onClick={() => setPlaying(p => !p)} disabled={!steps || stepIdx >= maxIdx} style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            background: playing ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)',
-            border: `1px solid ${playing ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`,
-            color: playing ? '#ef4444' : 'var(--accent-blue)',
-            padding: '7px 14px', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-          }}>
+          <button
+            onClick={() => setPlaying(p => !p)}
+            disabled={!steps || stepIdx >= maxIdx}
+            className={`aes-btn-play${playing ? ' aes-btn-play--playing' : ''}`}
+          >
             {playing ? <><Pause size={13} /> Pause</> : <><Play size={13} /> Play</>}
           </button>
         </div>
@@ -365,53 +307,42 @@ export default function AESVisualizer() {
 
       {/* Step progress bar */}
       {steps && (
-        <div style={{ display: 'flex', gap: '2px', marginBottom: '16px' }}>
+        <div className="aes-step-bar">
           {steps.map((s, i) => (
             <div
               key={i}
               onClick={() => setStepIdx(i)}
               title={`${OP_LABELS[s.op]}`}
-              style={{
-                flex: 1, height: '4px', borderRadius: '2px', cursor: 'pointer',
-                background: i <= stepIdx ? (OP_COLORS[s.op] || 'var(--accent-green)') : 'var(--bg-elevated)',
-                transition: 'background 0.2s',
-              }}
+              className="aes-step-bar__seg"
+              style={{ background: i <= stepIdx ? (OP_COLORS[s.op] || 'var(--accent-green)') : 'var(--bg-elevated)' }}
             />
           ))}
         </div>
       )}
 
       {/* Main visualization */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="aes-viz-grid">
         {/* State grid */}
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: '12px', padding: '20px',
-        }}>
-          <div style={{ marginBottom: '12px' }}>
+        <div className="aes-state-card">
+          <div className="aes-state-card__header">
             {currentStep ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '10px', height: '10px', borderRadius: '50%',
-                  background: opColor, boxShadow: `0 0 6px ${opColor}`,
-                }} />
-                <span style={{ fontSize: '14px', fontWeight: '600', color: opColor, fontFamily: 'JetBrains Mono, monospace' }}>
+              <div className="aes-state-card__header-row">
+                <div
+                  className="aes-op-dot"
+                  style={{ background: opColor, boxShadow: `0 0 6px ${opColor}` }}
+                />
+                <span className="aes-op-label" style={{ color: opColor }}>
                   {OP_LABELS[currentStep.op]}
                 </span>
               </div>
             ) : (
-              <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                State Matrix (4×4 bytes)
-              </span>
+              <span className="aes-state-card__placeholder">State Matrix (4x4 bytes)</span>
             )}
           </div>
 
-          {/* Row labels */}
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+          <div className="aes-row-labels">
             {[0,1,2,3].map(r => (
-              <div key={r} style={{ width: '52px', textAlign: 'center', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                row {r}
-              </div>
+              <div key={r} className="aes-row-label">row {r}</div>
             ))}
           </div>
 
@@ -423,17 +354,9 @@ export default function AESVisualizer() {
               stepKey={stepIdx}
             />
           ) : (
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(4, 52px)',
-              gridTemplateRows: 'repeat(4, 52px)', gap: '4px',
-            }}>
+            <div className="aes-placeholder-grid">
               {Array.from({length:16}).map((_,i) => (
-                <div key={i} style={{
-                  width:'52px', height:'52px', borderRadius:'6px',
-                  background:'var(--bg-elevated)', border:'1px solid var(--border)',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  fontFamily:'JetBrains Mono, monospace', fontSize:'13px', color:'var(--text-muted)',
-                }}>??</div>
+                <div key={i} className="aes-placeholder-cell">??</div>
               ))}
             </div>
           )}
@@ -444,79 +367,64 @@ export default function AESVisualizer() {
         </div>
 
         {/* Info panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="aes-info-col">
           {/* Operation explainer */}
-          <div style={{
-            background: 'var(--bg-card)', border: `1px solid ${currentStep ? opColor + '33' : 'var(--border)'}`,
-            borderRadius: '12px', padding: '16px',
-          }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
-              Operation
-            </div>
+          <div
+            className="aes-op-info"
+            style={{
+              background: 'var(--bg-card)',
+              border: `1px solid ${currentStep ? opColor + '33' : 'var(--border)'}`,
+            }}
+          >
+            <div className="aes-op-info-label">Operation</div>
             {currentStep ? (
               <>
-                <div style={{ fontSize: '15px', fontWeight: '600', color: opColor, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px' }}>
+                <div className="aes-op-info__name" style={{ color: opColor }}>
                   {OP_LABELS[currentStep.op]}
                 </div>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                <p className="aes-op-info__explainer">
                   {OP_EXPLAINERS[currentStep.op]}
                 </p>
+                <WhyBox>{OP_WHY[currentStep.op]}</WhyBox>
               </>
             ) : (
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
-                Press Play to begin. AES-128 applies 10 rounds of 4 operations each to the 4×4 state matrix.
+              <p className="aes-op-info__placeholder">
+                Press Play to begin. AES-128 applies 10 rounds of 4 operations each to the 4x4 state matrix.
               </p>
             )}
           </div>
 
           {/* Legend */}
-          <div style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: '12px', padding: '14px',
-          }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase' }}>
-              Legend
-            </div>
+          <div className="aes-legend">
+            <div className="aes-legend__title">Legend</div>
             {Object.entries(OP_LABELS).filter(([k]) => k !== 'initial').map(([op, label]) => (
-              <div key={op} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: OP_COLORS[op], flexShrink: 0 }} />
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>{label}</span>
+              <div key={op} className="aes-legend__row">
+                <div className="aes-legend__dot" style={{ background: OP_COLORS[op] }} />
+                <span className="aes-legend__label">{label}</span>
               </div>
             ))}
           </div>
 
           {/* Ciphertext */}
           {ciphertext && (
-            <div style={{
-              background: 'var(--bg-card)', border: '1px solid rgba(0,255,136,0.2)',
-              borderRadius: '12px', padding: '14px',
-            }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase' }}>
-                Final Ciphertext
-              </div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '13px',
-                color: 'var(--accent-green)', wordBreak: 'break-all', lineHeight: '1.6',
-              }}>
+            <div className="aes-ciphertext">
+              <div className="aes-ciphertext__label">Final Ciphertext</div>
+              <div className="aes-ciphertext__value">
                 {bytesToHex(ciphertext).match(/.{2}/g).join(' ')}
               </div>
             </div>
           )}
 
-          {/* Hex byte diff count */}
+          {/* Byte diff count */}
           {currentStep && prevStep && (() => {
             let changed = 0;
             for (let r = 0; r < 4; r++)
               for (let c = 0; c < 4; c++)
                 if (currentStep.state[r][c] !== prevStep.state[r][c]) changed++;
             return changed > 0 ? (
-              <div style={{
-                background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                borderRadius: '8px', padding: '10px 14px',
-                display: 'flex', alignItems: 'center', gap: '8px',
-              }}>
-                <div style={{ fontSize: '20px', fontWeight: '700', color: opColor, fontFamily: 'JetBrains Mono, monospace' }}>{changed}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div className="aes-byte-diff">
+                <div className="aes-byte-diff__count" style={{ color: opColor }}>{changed}</div>
+                <div className="aes-byte-diff__label">
                   of 16 bytes changed by {OP_LABELS[currentStep.op]}
                 </div>
               </div>

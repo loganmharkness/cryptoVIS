@@ -1,38 +1,32 @@
+import './HashVisualizer.css';
 import { useState, useEffect, useCallback } from 'react';
 import { sha256, bytesToHex, bytesToBits, countDifferentBits } from '../utils/hash';
+import { parseHash, setHashParam } from '../utils/urlState';
+
+function getBitClass(bit, differs, color) {
+  if (differs) return bit === 1 ? 'hash-bit--differs-1' : 'hash-bit--differs-0';
+  if (bit === 1) return color === 'green' ? 'hash-bit--same-1-green' : 'hash-bit--same-1-blue';
+  return 'hash-bit--same-0';
+}
+
+function getCharClass(differs, color) {
+  if (differs) return 'hash-hex-char--differs';
+  return color === 'green' ? 'hash-hex-char--same-green' : 'hash-hex-char--same-blue';
+}
 
 function BitGrid({ bits, compareBits, label, color }) {
   if (!bits || bits.length === 0) return null;
-
   return (
-    <div>
-      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase' }}>
-        {label} — bit grid (256 bits)
-      </div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(32, 1fr)',
-        gap: '2px',
-        width: '100%',
-      }}>
+    <div className="hash-bit-grid">
+      <div className="hash-bit-grid__label">{label} — bit grid (256 bits)</div>
+      <div className="hash-bit-grid__cells">
         {bits.map((bit, i) => {
           const differs = compareBits && compareBits[i] !== bit;
           return (
             <div
               key={i}
               title={`Bit ${i}: ${bit}`}
-              style={{
-                aspectRatio: '1',
-                borderRadius: '2px',
-                background: differs
-                  ? (bit === 1 ? '#ef444499' : '#ef444433')
-                  : bit === 1
-                    ? (color === 'green' ? 'rgba(0,255,136,0.7)' : 'rgba(14,165,233,0.7)')
-                    : 'var(--bg-elevated)',
-                border: `1px solid ${differs ? 'rgba(239,68,68,0.4)' : 'transparent'}`,
-                transition: 'background 0.15s, border-color 0.15s',
-                animation: differs ? 'bit-change 0.3s ease-out' : undefined,
-              }}
+              className={`hash-bit ${getBitClass(bit, differs, color)}`}
             />
           );
         })}
@@ -43,11 +37,8 @@ function BitGrid({ bits, compareBits, label, color }) {
 
 function HashDisplay({ hash, compareHash, label, color }) {
   if (!hash) return (
-    <div style={{
-      background: 'var(--bg-elevated)', borderRadius: '8px', padding: '10px 12px',
-      fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--text-muted)',
-    }}>
-      {label}: —
+    <div className={`hash-display hash-display--${color} hash-display--empty`}>
+      <div className="hash-display__label">{label}: —</div>
     </div>
   );
 
@@ -55,20 +46,13 @@ function HashDisplay({ hash, compareHash, label, color }) {
   const compareHexStr = compareHash ? bytesToHex(compareHash) : null;
 
   return (
-    <div style={{
-      background: 'var(--bg-elevated)', border: `1px solid ${color === 'green' ? 'rgba(0,255,136,0.15)' : 'rgba(14,165,233,0.15)'}`,
-      borderRadius: '8px', padding: '10px 12px',
-    }}>
-      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>{label}</div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', letterSpacing: '0.5px', lineHeight: '1.8', wordBreak: 'break-all' }}>
+    <div className={`hash-display hash-display--${color}`}>
+      <div className="hash-display__label">{label}</div>
+      <div className="hash-display__hex">
         {hexStr.split('').map((ch, i) => {
           const differs = compareHexStr && compareHexStr[i] !== ch;
           return (
-            <span key={i} style={{
-              color: differs ? '#ef4444' : (color === 'green' ? 'var(--accent-green)' : 'var(--accent-blue)'),
-              fontWeight: differs ? '700' : '400',
-              transition: 'color 0.15s',
-            }}>{ch}</span>
+            <span key={i} className={`hash-hex-char ${getCharClass(differs, color)}`}>{ch}</span>
           );
         })}
       </div>
@@ -78,31 +62,22 @@ function HashDisplay({ hash, compareHash, label, color }) {
 
 function InputBox({ label, value, onChange, color, placeholder }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{label}</label>
+    <div className="hash-input-box">
+      <label className="hash-input-box__label">{label}</label>
       <textarea
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        style={{
-          background: 'var(--bg-elevated)',
-          border: `1px solid ${color === 'green' ? 'rgba(0,255,136,0.2)' : 'rgba(14,165,233,0.2)'}`,
-          borderRadius: '8px', padding: '10px 12px',
-          color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px',
-          resize: 'vertical', outline: 'none', width: '100%',
-          lineHeight: '1.5',
-        }}
-        onFocus={e => { e.target.style.borderColor = color === 'green' ? 'rgba(0,255,136,0.5)' : 'rgba(14,165,233,0.5)'; }}
-        onBlur={e => { e.target.style.borderColor = color === 'green' ? 'rgba(0,255,136,0.2)' : 'rgba(14,165,233,0.2)'; }}
+        className={`hash-textarea hash-textarea--${color}`}
       />
     </div>
   );
 }
 
 export default function HashVisualizer() {
-  const [inputA, setInputA] = useState('Hello, CryptoVis!');
-  const [inputB, setInputB] = useState('Hello, CryptoVis.');
+  const [inputA, setInputA] = useState(() => parseHash().params.get('a') ?? 'Hello, CryptoVis!');
+  const [inputB, setInputB] = useState(() => parseHash().params.get('b') ?? 'Hello, CryptoVis.');
   const [hashA, setHashA] = useState(null);
   const [hashB, setHashB] = useState(null);
   const [bitsA, setBitsA] = useState(null);
@@ -128,155 +103,87 @@ export default function HashVisualizer() {
     setSingleHash(h);
   }, []);
 
-  useEffect(() => { updateA(inputA); }, [inputA]);
-  useEffect(() => { updateB(inputB); }, [inputB]);
+  useEffect(() => { updateA(inputA); setHashParam('a', inputA); }, [inputA]);
+  useEffect(() => { updateB(inputB); setHashParam('b', inputB); }, [inputB]);
   useEffect(() => { updateSingle(singleInput); }, [singleInput]);
 
   const diffBits = hashA && hashB ? countDifferentBits(bitsA, bitsB) : null;
-  const diffBytes = hashA && hashB
-    ? hashA.filter((b, i) => b !== hashB[i]).length
-    : null;
+  const diffBytes = hashA && hashB ? hashA.filter((b, i) => b !== hashB[i]).length : null;
   const diffPct = diffBits != null ? ((diffBits / 256) * 100).toFixed(1) : null;
+
+  const meterClass = diffBits > 100 ? 'hash-meter-fill--red' : diffBits > 50 ? 'hash-meter-fill--amber' : 'hash-meter-fill--green';
+  const statValueClass = diffBits > 100 ? 'hash-stat__value--red' : diffBits > 50 ? 'hash-stat__value--amber' : 'hash-stat__value--green';
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>
-          SHA-256 & Avalanche Effect
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '14px' }}>
-          A one-bit change in input should flip ~50% of the output bits. That's the avalanche effect — the foundation of cryptographic hash strength.
+      <div className="hash-header">
+        <h1 className="hash-title">SHA-256 & Avalanche Effect</h1>
+        <p className="hash-subtitle">
+          A cryptographic hash function takes any input and produces a fixed-size fingerprint. Change one character and the output looks completely different. That property -- called the avalanche effect -- is the foundation of password storage, digital signatures, and blockchain integrity.
         </p>
       </div>
 
       {/* Live single hash */}
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '20px', marginBottom: '20px',
-      }}>
-        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace' }}>
-          Live SHA-256
-        </div>
+      <div className="hash-live-section">
+        <div className="hash-live-section__title">Live SHA-256</div>
+        <p className="hash-live-section__desc">
+          SHA-256 always produces a 256-bit (32-byte) output, shown here as 64 hex characters. The same input always produces the same hash. But there is no way to reverse it: given only the hash, you cannot recover the input. This is called pre-image resistance and it is what makes hashing useful for passwords -- a server can store the hash and verify a login without ever storing the actual password.
+        </p>
         <input
           value={singleInput}
           onChange={e => setSingleInput(e.target.value)}
-          placeholder="Type anything — hash updates live…"
-          style={{
-            width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-            borderRadius: '8px', padding: '10px 14px', color: 'var(--text-primary)',
-            fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', marginBottom: '12px',
-          }}
+          placeholder="Type anything -- hash updates live..."
+          className="hash-live-input"
         />
         {singleHash ? (
-          <div>
-            <div style={{
-              fontFamily: 'JetBrains Mono, monospace', fontSize: '13px',
-              color: 'var(--accent-green)', wordBreak: 'break-all', lineHeight: '1.8',
-              letterSpacing: '1px', animation: 'fadeIn 0.1s ease-out',
-            }}>
-              {bytesToHex(singleHash)}
-            </div>
+          <div className="hash-live-result">
+            <div className="hash-live-hex">{bytesToHex(singleHash)}</div>
             <div style={{ marginTop: '12px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace' }}>
-                BIT PATTERN (256 squares — green = 1, dark = 0)
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(32, 1fr)', gap: '2px' }}>
+              <div className="hash-live-bit-label">BIT PATTERN (256 squares -- green = 1, dark = 0)</div>
+              <div className="hash-live-bits">
                 {bytesToBits(singleHash).map((bit, i) => (
-                  <div key={i} style={{
-                    aspectRatio: '1', borderRadius: '2px',
-                    background: bit === 1 ? 'rgba(0,255,136,0.7)' : 'var(--bg-elevated)',
-                    transition: 'background 0.1s',
-                  }} />
+                  <div key={i} className={`hash-live-bit${bit === 1 ? ' hash-live-bit--on' : ' hash-live-bit--off'}`} />
                 ))}
               </div>
             </div>
           </div>
         ) : (
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-            SHA-256("") = e3b0c44298fc1c149afb...
-          </div>
+          <div className="hash-live-placeholder">SHA-256("") = e3b0c44298fc1c149afb...</div>
         )}
       </div>
 
       {/* Avalanche section */}
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '20px', marginBottom: '20px',
-      }}>
-        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
-          Avalanche Effect — Side-by-Side Comparison
-        </div>
-        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-          Start with identical text in both boxes. Change one character in one box and watch how many hash bits flip.
-        </div>
+      <div className="hash-avalanche-section">
+        <div className="hash-avalanche-section__title">Avalanche Effect -- Side-by-Side Comparison</div>
+        <p className="hash-avalanche-section__desc">
+          Start with identical text in both boxes. Change one character and watch how many output bits flip. A secure hash function must flip roughly 50% of output bits for any single-bit input change -- less than that, and patterns in the output could leak information about the input. Red squares below are bits that differ between the two hashes.
+        </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-          <InputBox
-            label="Input A"
-            value={inputA}
-            onChange={setInputA}
-            color="green"
-            placeholder="Type text A…"
-          />
-          <InputBox
-            label="Input B"
-            value={inputB}
-            onChange={setInputB}
-            color="blue"
-            placeholder="Type text B…"
-          />
+        <div className="hash-inputs-grid">
+          <InputBox label="Input A" value={inputA} onChange={setInputA} color="green" placeholder="Type text A..." />
+          <InputBox label="Input B" value={inputB} onChange={setInputB} color="blue" placeholder="Type text B..." />
         </div>
 
         {/* Diff stats */}
         {diffBits != null && (
-          <div style={{
-            display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px',
-            animation: 'fadeIn 0.2s ease-out',
-          }}>
-            <div style={{
-              background: 'var(--bg-elevated)', borderRadius: '8px', padding: '12px 16px',
-              display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '120px',
-            }}>
-              <div style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'JetBrains Mono, monospace', color: diffBits > 100 ? '#ef4444' : diffBits > 50 ? 'var(--accent-amber)' : 'var(--accent-green)' }}>
-                {diffBits}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>bits differ (of 256)</div>
+          <div className="hash-diff-stats">
+            <div className="hash-stat-box">
+              <div className={`hash-stat__value ${statValueClass}`}>{diffBits}</div>
+              <div className="hash-stat__label">bits differ (of 256)</div>
             </div>
-            <div style={{
-              background: 'var(--bg-elevated)', borderRadius: '8px', padding: '12px 16px',
-              display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '120px',
-            }}>
-              <div style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent-amber)' }}>
-                {diffPct}%
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>of output bits flipped</div>
+            <div className="hash-stat-box">
+              <div className="hash-stat__value hash-stat__value--amber">{diffPct}%</div>
+              <div className="hash-stat__label">of output bits flipped</div>
             </div>
-            <div style={{
-              background: 'var(--bg-elevated)', borderRadius: '8px', padding: '12px 16px',
-              display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '120px',
-            }}>
-              <div style={{ fontSize: '22px', fontWeight: '700', fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent-blue)' }}>
-                {diffBytes}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>bytes differ (of 32)</div>
+            <div className="hash-stat-box">
+              <div className="hash-stat__value hash-stat__value--blue">{diffBytes}</div>
+              <div className="hash-stat__label">bytes differ (of 32)</div>
             </div>
-            <div style={{
-              background: 'var(--bg-elevated)', borderRadius: '8px', padding: '12px 16px', flex: 1,
-              display: 'flex', alignItems: 'center', gap: '12px',
-            }}>
-              <div style={{
-                flex: 1, height: '8px', borderRadius: '4px', background: 'var(--bg-card)',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  height: '100%',
-                  width: `${diffPct}%`,
-                  borderRadius: '4px',
-                  background: diffBits > 100 ? '#ef4444' : diffBits > 50 ? 'var(--accent-amber)' : 'var(--accent-green)',
-                  transition: 'width 0.2s ease-out, background 0.2s',
-                }} />
+            <div className="hash-stat-box hash-stat-box--flex">
+              <div className="hash-meter-track">
+                <div className={`hash-meter-fill ${meterClass}`} style={{ width: `${diffPct}%` }} />
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+              <div className="hash-meter-label">
                 {parseFloat(diffPct) < 30 ? 'Low avalanche' : parseFloat(diffPct) < 45 ? 'Good avalanche' : 'Excellent avalanche'}
               </div>
             </div>
@@ -284,54 +191,92 @@ export default function HashVisualizer() {
         )}
 
         {/* Hash displays */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+        <div className="hash-displays-grid">
           <HashDisplay hash={hashA} compareHash={hashB} label="SHA-256(A)" color="green" />
           <HashDisplay hash={hashB} compareHash={hashA} label="SHA-256(B)" color="blue" />
         </div>
 
         {/* Bit grids */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="hash-bit-grids">
           <BitGrid bits={bitsA} compareBits={bitsB} label="Hash A" color="green" />
           <BitGrid bits={bitsB} compareBits={bitsA} label="Hash B" color="blue" />
         </div>
 
         {diffBits != null && (
-          <div style={{
-            marginTop: '12px', padding: '10px 14px',
-            background: 'var(--bg-elevated)', borderRadius: '8px',
-            fontSize: '12px', color: 'var(--text-secondary)',
-          }}>
-            <span style={{ color: '#ef4444', fontWeight: '600' }}>Red bits</span> differ between the two hashes.{' '}
-            <span style={{ color: 'var(--accent-green)' }}>Green bits</span> are 1 and same.{' '}
-            <span style={{ color: 'var(--text-muted)' }}>Dark bits</span> are 0 and same.
+          <div className="hash-legend">
+            <span className="hash-legend__red">Red bits</span> differ between the two hashes.{' '}
+            <span className="hash-legend__green">Green bits</span> are 1 and same.{' '}
+            <span className="hash-legend__dark">Dark bits</span> are 0 and same.
           </div>
         )}
       </div>
 
-      {/* How SHA-256 works explainer */}
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '20px',
-      }}>
-        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace' }}>
-          How SHA-256 Works
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+      {/* How SHA-256 works */}
+      <div className="hash-explainer-section">
+        <div className="hash-explainer-section__title">How SHA-256 Works</div>
+        <div className="hash-cards-grid">
           {[
-            { title: 'Pre-processing', body: 'Message is padded to a multiple of 512 bits. A "1" bit, zeros, then the original length are appended.' },
-            { title: '64 Rounds', body: 'Each 512-bit chunk goes through 64 rounds of mixing using bitwise operations (AND, XOR, rotate, add) and round constants.' },
-            { title: 'Compression', body: 'Eight 32-bit working variables (a–h) are updated each round. Result is mixed into the hash state.' },
-            { title: 'Output', body: 'Final 256-bit hash = concatenation of 8 state words. Any change in input cascades through all 64 rounds — the avalanche effect.' },
-          ].map(({ title, body }) => (
-            <div key={title} style={{
-              background: 'var(--bg-elevated)', borderRadius: '8px', padding: '12px 14px',
-            }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace', marginBottom: '6px' }}>{title}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>{body}</div>
+            {
+              title: 'Padding',
+              color: 'var(--accent-blue)',
+              body: 'The input is padded to a multiple of 512 bits. SHA-256 appends a single 1-bit, then zeros, then a 64-bit encoding of the original message length. This ensures messages of different lengths produce structurally different inputs to the compression function, preventing length-extension attacks.',
+            },
+            {
+              title: '64 Rounds per Block',
+              color: 'var(--accent-green)',
+              body: 'Each 512-bit message block goes through 64 rounds of compression. Each round uses a round constant (derived from cube roots of the first 64 primes), a 32-bit word from the message schedule, and bitwise operations: Ch (choice), Maj (majority), sigma rotations, and modular addition. The round constants are specifically chosen to destroy any algebraic structure.',
+            },
+            {
+              title: 'Eight Working Variables',
+              color: 'var(--accent-purple)',
+              body: 'The compression function maintains 8 working variables (a through h), each 32 bits. At each of the 64 rounds, all 8 variables are updated based on the current round\'s input and operations. Every variable feeds into the next round\'s computation, so a single changed bit in any round propagates forward and affects all subsequent rounds.',
+            },
+            {
+              title: 'Merkle-Damgard Construction',
+              color: 'var(--accent-amber)',
+              body: 'SHA-256 uses the Merkle-Damgard construction: each block\'s output is mixed back into the state before the next block is processed. The final 256-bit hash is the concatenation of 8 state words after all blocks are processed. This chaining means the hash of a long message cannot be computed without processing every single byte.',
+            },
+          ].map(({ title, color, body }) => (
+            <div key={title} className="hash-info-card">
+              <div className="hash-info-card__title" style={{ color }}>{title}</div>
+              <div className="hash-info-card__body">{body}</div>
             </div>
           ))}
         </div>
-        
+      </div>
+
+      {/* Why hashing matters */}
+      <div className="hash-why-section">
+        <div className="hash-why-section__title">Why Cryptographic Hashing Matters</div>
+        <div className="hash-cards-grid">
+          {[
+            {
+              title: 'Password Storage',
+              color: 'var(--accent-green)',
+              body: 'Websites never store your password directly. They store SHA-256 (or bcrypt/argon2) of your password. At login, they hash what you typed and compare. If the database leaks, attackers get hashes, not passwords. Cracking requires guessing billions of candidates and hashing each one.',
+            },
+            {
+              title: 'Digital Signatures',
+              color: 'var(--accent-blue)',
+              body: 'Signing a 10MB document with RSA directly would be impossibly slow. Instead, SHA-256 produces a 32-byte fingerprint of the document, and only that fingerprint is signed. If even one byte of the document changes, the hash changes completely and the signature becomes invalid.',
+            },
+            {
+              title: 'Blockchain Integrity',
+              color: 'var(--accent-purple)',
+              body: 'Each Bitcoin block contains the SHA-256 hash of the previous block. Changing any historical transaction would change that block\'s hash, breaking the chain for every subsequent block. An attacker would have to redo the proof-of-work for every block after the tampered one -- more computation than the rest of the network combined.',
+            },
+            {
+              title: 'File Integrity',
+              color: 'var(--accent-amber)',
+              body: 'Software publishers post SHA-256 checksums of their downloads. After downloading, you hash the file and compare. If the hash matches, the file is byte-for-byte identical to what was published. A man-in-the-middle who modified the file in transit would produce a completely different hash, immediately detectable.',
+            },
+          ].map(({ title, color, body }) => (
+            <div key={title} className="hash-info-card">
+              <div className="hash-info-card__title" style={{ color }}>{title}</div>
+              <div className="hash-info-card__body">{body}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,143 @@
+/* === Page header =============================================== */
+.rsa-header { margin-bottom: 24px; }
+.rsa-title { font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0; font-family: 'JetBrains Mono', monospace; }
+.rsa-subtitle { color: var(--text-secondary); margin-top: 6px; font-size: 14px; }
+
+/* === WhyBox ==================================================== */
+.rsa-why-box { border-left: 3px solid rgba(245,158,11,0.6); background: rgba(245,158,11,0.05); border-radius: 0 8px 8px 0; padding: 12px 14px; margin-top: 12px; }
+.rsa-why-box__title { font-size: 11px; font-weight: 600; color: var(--accent-amber); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.rsa-why-box__body { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0; }
+
+/* === Tooltip =================================================== */
+.rsa-tooltip { position: relative; display: inline-flex; align-items: center; }
+.rsa-tooltip__popup { position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #1a1d27; border: 1px solid var(--border-bright); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-family: Inter, sans-serif; font-weight: 400; }
+
+/* === Tag ======================================================= */
+.rsa-tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.rsa-tag--green { background: rgba(0,255,136,0.15); color: var(--accent-green); }
+.rsa-tag--blue { background: rgba(14,165,233,0.15); color: var(--accent-blue); }
+.rsa-tag--purple { background: rgba(168,85,247,0.15); color: var(--accent-purple); }
+.rsa-tag--amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+
+/* === BigNum ==================================================== */
+.rsa-bignum { background: var(--bg-elevated); border-radius: 8px; padding: 12px 16px; }
+.rsa-bignum--green { border: 1px solid rgba(0,255,136,0.2); }
+.rsa-bignum--blue { border: 1px solid rgba(14,165,233,0.2); }
+.rsa-bignum--purple { border: 1px solid rgba(168,85,247,0.2); }
+.rsa-bignum--amber { border: 1px solid rgba(245,158,11,0.2); }
+.rsa-bignum--animate { animation: fadeIn 0.4s ease-out; }
+.rsa-bignum__label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.5px; }
+.rsa-bignum__value { font-family: 'JetBrains Mono', monospace; word-break: break-all; line-height: 1.5; }
+.rsa-bignum__value--green { color: var(--accent-green); }
+.rsa-bignum__value--blue { color: var(--accent-blue); }
+.rsa-bignum__value--purple { color: var(--accent-purple); }
+.rsa-bignum__value--amber { color: var(--accent-amber); }
+
+/* === PrimeCandidates =========================================== */
+.rsa-prime-candidates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.rsa-prime-cand { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 8px; border-radius: 4px; transition: all 0.2s; animation: fadeIn 0.3s ease-out; border: 1px solid transparent; }
+.rsa-prime-cand--found { background: rgba(0,255,136,0.2); color: var(--accent-green); border-color: rgba(0,255,136,0.3); }
+.rsa-prime-cand--prime { background: rgba(245,158,11,0.1); color: var(--accent-amber); }
+.rsa-prime-cand--rejected { background: rgba(239,68,68,0.1); color: #6b7280; }
+.rsa-prime-cand__cross { margin-left: 4px; color: #ef4444; }
+
+/* === EuclidTable =============================================== */
+.rsa-euclid-wrap { overflow-x: auto; margin-top: 12px; }
+.rsa-euclid-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.rsa-euclid-table thead tr { border-bottom: 1px solid var(--border); }
+.rsa-euclid-table th { padding: 6px 8px; color: var(--text-muted); font-weight: 500; text-align: left; }
+.rsa-euclid-row { border-bottom: 1px solid rgba(255,255,255,0.03); }
+.rsa-euclid-row td { padding: 5px 8px; }
+.rsa-euclid-td-step { color: var(--text-muted); }
+.rsa-euclid-td-q { color: var(--accent-amber); }
+.rsa-euclid-td-r { color: var(--accent-blue); }
+.rsa-euclid-td-s { color: var(--accent-purple); }
+.rsa-euclid-td-t { color: var(--accent-green); }
+
+/* === Controls bar ============================================= */
+.rsa-controls { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.rsa-controls__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.rsa-speed-label { font-size: 12px; color: var(--text-muted); }
+
+.rsa-btn-regen { display: flex; align-items: center; gap: 6px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: var(--accent-green); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+
+.rsa-btn-custom-toggle { display: flex; align-items: center; gap: 6px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.rsa-btn-custom-toggle--active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--accent-purple); }
+
+.rsa-btn-nav { display: flex; align-items: center; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.rsa-btn-nav:disabled { color: var(--text-muted); cursor: default; }
+
+.rsa-btn-speed { padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.rsa-btn-speed--active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--accent-purple); }
+
+.rsa-btn-play { display: flex; align-items: center; gap: 6px; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: var(--accent-blue); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.rsa-btn-play:disabled { cursor: default; }
+.rsa-btn-play--playing { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+
+/* === Custom primes panel ======================================= */
+.rsa-custom-panel { background: var(--bg-card); border: 1px solid rgba(168,85,247,0.25); border-radius: 12px; padding: 16px; margin-bottom: 20px; animation: fadeIn 0.2s ease-out; }
+.rsa-custom-panel__title { font-size: 13px; font-weight: 600; color: var(--accent-purple); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 6px; }
+.rsa-custom-panel__inputs { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.rsa-custom-panel__field { flex: 1; min-width: 160px; }
+.rsa-custom-panel__field-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.rsa-prime-input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none; transition: border-color 0.2s; }
+.rsa-prime-input--valid { border-color: rgba(0,255,136,0.4); }
+.rsa-prime-input--error { border-color: rgba(239,68,68,0.4); }
+.rsa-prime-status { font-size: 11px; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.rsa-prime-status--valid { color: var(--accent-green); }
+.rsa-prime-status--error { color: #ef4444; }
+.rsa-custom-panel__apply { display: flex; flex-direction: column; justify-content: flex-end; }
+.rsa-btn-apply { display: flex; align-items: center; gap: 6px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 8px; cursor: default; font-size: 13px; font-weight: 500; margin-top: 20px; }
+.rsa-btn-apply--ready { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--accent-purple); cursor: pointer; }
+.rsa-custom-panel__error { margin-top: 10px; font-size: 12px; color: #ef4444; font-family: 'JetBrains Mono', monospace; }
+
+/* === Step progress bar ======================================== */
+.rsa-step-bar { display: flex; gap: 4px; margin-bottom: 20px; }
+.rsa-step-bar__seg { flex: 1; height: 4px; border-radius: 2px; cursor: pointer; background: var(--bg-elevated); transition: background 0.3s; }
+.rsa-step-bar__seg--done { background: var(--accent-green); }
+
+/* === Step card ================================================ */
+.rsa-step-card { background: var(--bg-card); border: 1px solid var(--border-bright); border-radius: 12px; padding: 20px; margin-bottom: 20px; animation: fadeIn 0.3s ease-out; }
+.rsa-step-card__header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.rsa-step-card__title { font-size: 16px; font-weight: 600; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+.rsa-step-card__explainer { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+.rsa-step-card__spacer { margin-bottom: 16px; }
+.rsa-step-grid { display: grid; gap: 12px; }
+
+/* Step layout helpers */
+.rsa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rsa-step2-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 8px; align-items: center; }
+.rsa-step2-op { color: var(--text-muted); font-size: 20px; text-align: center; }
+.rsa-formula-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
+.rsa-coprime-note { grid-column: 1/-1; background: var(--bg-elevated); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+.rsa-euclid-finding { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+/* Step 6 key boxes */
+.rsa-key-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rsa-key-box { border-radius: 10px; padding: 16px; }
+.rsa-key-box--public { background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); }
+.rsa-key-box--private { background: rgba(168,85,247,0.05); border: 1px solid rgba(168,85,247,0.2); }
+.rsa-key-box__header { font-weight: 600; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.rsa-key-box__header--public { color: var(--accent-green); }
+.rsa-key-box__header--private { color: var(--accent-purple); }
+.rsa-key-box__secondary { margin-top: 8px; }
+
+/* === Encrypt/Decrypt demo ===================================== */
+.rsa-demo-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; animation: fadeIn 0.4s ease-out; }
+.rsa-demo-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace; }
+.rsa-demo-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.rsa-demo-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+.rsa-demo-field-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.rsa-demo-input { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 14px; width: 160px; }
+.rsa-btn-encrypt { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: var(--accent-green); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.rsa-btn-decrypt { background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3); color: var(--accent-purple); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.rsa-demo-result { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; animation: fadeIn 0.3s ease-out; }
+.rsa-demo-arrow { text-align: center; font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; justify-content: center; }
+.rsa-demo-arrow__formula { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.rsa-demo-arrow__key { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.rsa-demo-arrow__key--green { color: var(--accent-green); }
+.rsa-demo-arrow__key--purple { color: var(--accent-purple); }
+
+/* === Start prompt ============================================= */
+.rsa-start-prompt { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+.rsa-start-prompt__key { color: var(--accent-blue); }
