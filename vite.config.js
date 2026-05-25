@@ -8,7 +8,10 @@ export default defineConfig({
   base: '/cryptoVIS/',
   build: {
     rollupOptions: {
-      input: resolve(__dirname, 'app.html'),
+      input: {
+        landing: resolve(__dirname, 'index.html'),
+        app: resolve(__dirname, 'app.html'),
+      },
     },
   },
 })
