@@ -1,13 +1,100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CryptoVis - Visualise Cryptography</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoVis — Cryptography Visualised</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { mono: ['JetBrains Mono', 'monospace'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0f17; font-family: 'JetBrains Mono', monospace; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #00ff88 0%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cta-btn {
+      background: linear-gradient(135deg, #00ff88, #0ea5e9);
+      box-shadow: 0 0 32px rgba(0, 255, 136, 0.25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 0 48px rgba(0, 255, 136, 0.4);
+    }
+
+    .dot-grid {
+      background-image: radial-gradient(rgba(0, 255, 136, 0.12) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <div class="fixed inset-0 dot-grid pointer-events-none"></div>
+  <div class="fixed inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,255,136,0.07) 0%, transparent 70%);"></div>
+
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
+
+    <div class="flex items-center gap-3 mb-16">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm text-black" style="background: linear-gradient(135deg, #00ff88, #0ea5e9);">
+        CV
+      </div>
+      <span class="text-xs tracking-[0.2em] uppercase text-gray-500">CryptoVis</span>
+    </div>
+
+    <h1 class="text-5xl sm:text-6xl font-bold text-white leading-tight mb-6 tracking-tight">
+      Cryptography,<br class="hidden sm:block" />
+      <span class="gradient-text">step by step.</span>
+    </h1>
+
+    <p class="text-gray-400 text-base sm:text-lg leading-relaxed max-w-xl mb-12">
+      An interactive playground that animates the maths behind
+      RSA&nbsp;keys, AES block encryption, and the SHA-256 avalanche
+      effect — no black boxes.
+    </p>
+
+    <div class="flex flex-wrap items-center justify-center gap-2 mb-14">
+      <span class="px-3 py-1 rounded-full text-xs border" style="color:#00ff88; border-color:rgba(0,255,136,0.3); background:rgba(0,255,136,0.08);">
+        RSA Key Generation
+      </span>
+      <span class="px-3 py-1 rounded-full text-xs border" style="color:#0ea5e9; border-color:rgba(14,165,233,0.3); background:rgba(14,165,233,0.08);">
+        AES-128 Block Cipher
+      </span>
+      <span class="px-3 py-1 rounded-full text-xs border" style="color:#a855f7; border-color:rgba(168,85,247,0.3); background:rgba(168,85,247,0.08);">
+        SHA-256 &amp; Avalanche Effect
+      </span>
+    </div>
+
+    <a href="./app.html" class="cta-btn inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-black text-sm">
+      Open the Playground
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
+
+  </main>
+
+  <footer class="relative z-10 text-center pb-8">
+    <p class="text-xs text-gray-600 tracking-wide">
+      Web Crypto API &middot; No external libraries &middot; Pure maths
+    </p>
+  </footer>
+
+</body>
 </html>

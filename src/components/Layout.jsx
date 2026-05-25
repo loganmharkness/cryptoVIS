@@ -36,7 +36,7 @@ export default function Layout({ active, setActive, children }) {
             }}>CV</div>
             <div>
               <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace' }}>CryptoVis</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Crypto Playground</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Crypto Visualisation</div>
             </div>
           </div>
         </div>
