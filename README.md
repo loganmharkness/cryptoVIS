@@ -2,8 +2,6 @@
 
 An interactive cryptography playground that animates the math behind RSA, AES, SHA-256, and Diffie-Hellman -- step by step, no black boxes.
 
-Live at: [loganmharkness.github.io/cryptoVIS](https://loganmharkness.github.io/cryptoVIS)
-
 ---
 
 ## Tools
@@ -58,7 +56,6 @@ npm run build    # production build to dist/
 npm run preview  # preview the production build locally
 ```
 
-Deployment is automatic on push to `main` via GitHub Actions.
 
 ---
 
