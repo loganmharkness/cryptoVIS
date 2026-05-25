@@ -117,6 +117,27 @@ export function generateRSASteps(bits = 16) {
   return { p, q, n, phi, e, d, euclidSteps, pCandidates: pResult.candidates, qCandidates: qResult.candidates };
 }
 
+// Build RSA step data from caller-supplied primes (skips random generation)
+export function buildRSAStepsFromPrimes(p, q) {
+  const n = p * q;
+  const phi = (p - 1n) * (q - 1n);
+
+  let e = 65537n;
+  if (e >= phi || gcd(e, phi) !== 1n) {
+    e = 3n;
+    while (e < phi && gcd(e, phi) !== 1n) e += 2n;
+  }
+
+  const { x, steps: euclidSteps } = extendedGcd(e, phi);
+  const d = ((x % phi) + phi) % phi;
+
+  return {
+    p, q, n, phi, e, d, euclidSteps,
+    pCandidates: [{ value: p, isPrime: true }],
+    qCandidates: [{ value: q, isPrime: true }],
+  };
+}
+
 // Encrypt/decrypt small numbers (m < n)
 export function rsaEncrypt(m, e, n) { return modPow(m, e, n); }
 export function rsaDecrypt(c, d, n) { return modPow(c, d, n); }

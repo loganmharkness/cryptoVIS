@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, SkipForward, SkipBack, RefreshCw, Lock, Unlock } from 'lucide-react';
-import { generateRSASteps, rsaEncrypt, rsaDecrypt } from '../utils/rsa';
+import { Play, Pause, SkipForward, SkipBack, RefreshCw, Lock, Unlock, KeyRound } from 'lucide-react';
+import { generateRSASteps, buildRSAStepsFromPrimes, rsaEncrypt, rsaDecrypt, isPrime } from '../utils/rsa';
 
-const SPEEDS = { slow: 1800, medium: 900, fast: 350 };
+const SPEEDS = { slow: 4000, medium: 2000, fast: 800 };
 
 function Tooltip({ text, children }) {
   const [show, setShow] = useState(false);
@@ -155,9 +155,29 @@ export default function RSAVisualizer() {
   const [msgInput, setMsgInput] = useState('42');
   const [encrypted, setEncrypted] = useState(null);
   const [decrypted, setDecrypted] = useState(null);
+  const [customMode, setCustomMode] = useState(false);
+  const [customP, setCustomP] = useState('');
+  const [customQ, setCustomQ] = useState('');
   const timerRef = useRef(null);
 
   const maxStep = STEP_TITLES.length - 1;
+
+  function validatePrime(str) {
+    if (!str.trim()) return 'empty';
+    try {
+      const n = BigInt(str.trim());
+      if (n < 2n) return 'too-small';
+      return isPrime(n) ? 'valid' : 'not-prime';
+    } catch {
+      return 'invalid';
+    }
+  }
+
+  const pStatus = validatePrime(customP);
+  const qStatus = validatePrime(customQ);
+  const bothValid = pStatus === 'valid' && qStatus === 'valid';
+  const sameValue = bothValid && BigInt(customP.trim()) === BigInt(customQ.trim());
+  const canApplyCustom = bothValid && !sameValue;
 
   const generate = useCallback(() => {
     const result = generateRSASteps(16);
@@ -167,6 +187,18 @@ export default function RSAVisualizer() {
     setDecrypted(null);
     setPlaying(false);
   }, []);
+
+  const generateFromCustom = useCallback(() => {
+    if (!canApplyCustom) return;
+    const p = BigInt(customP.trim());
+    const q = BigInt(customQ.trim());
+    const result = buildRSAStepsFromPrimes(p, q);
+    setData(result);
+    setStep(-1);
+    setEncrypted(null);
+    setDecrypted(null);
+    setPlaying(false);
+  }, [customP, customQ, canApplyCustom]);
 
   useEffect(() => { generate(); }, []);
 
@@ -202,7 +234,7 @@ export default function RSAVisualizer() {
   const visible = step >= 0;
 
   return (
-    <div style={{ maxWidth: '900px' }}>
+    <div style={{ width: '100%' }}>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>
           RSA Key Generation
@@ -227,6 +259,16 @@ export default function RSAVisualizer() {
           <RefreshCw size={14} /> New Keys
         </button>
 
+        <button onClick={() => setCustomMode(m => !m)} style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          background: customMode ? 'rgba(168,85,247,0.15)' : 'var(--bg-elevated)',
+          border: `1px solid ${customMode ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
+          color: customMode ? 'var(--accent-purple)' : 'var(--text-secondary)',
+          padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+        }}>
+          <KeyRound size={14} /> Custom Primes
+        </button>
+
         <button onClick={() => setStep(s => Math.max(-1, s - 1))} disabled={step <= -1} style={{
           display: 'flex', alignItems: 'center', gap: '4px',
           background: 'var(--bg-elevated)', border: '1px solid var(--border)',
@@ -234,16 +276,6 @@ export default function RSAVisualizer() {
           padding: '8px 12px', borderRadius: '8px', cursor: step <= -1 ? 'default' : 'pointer', fontSize: '13px',
         }}>
           <SkipBack size={14} /> Back
-        </button>
-
-        <button onClick={() => setPlaying(p => !p)} disabled={step >= maxStep} style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          background: playing ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)',
-          border: `1px solid ${playing ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`,
-          color: playing ? '#ef4444' : 'var(--accent-blue)',
-          padding: '8px 16px', borderRadius: '8px', cursor: step >= maxStep ? 'default' : 'pointer', fontSize: '13px', fontWeight: '500',
-        }}>
-          {playing ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Play</>}
         </button>
 
         <button onClick={() => setStep(s => Math.min(maxStep, s + 1))} disabled={step >= maxStep} style={{
@@ -265,8 +297,94 @@ export default function RSAVisualizer() {
               color: speed === s ? 'var(--accent-purple)' : 'var(--text-muted)',
             }}>{s}</button>
           ))}
+          <button onClick={() => setPlaying(p => !p)} disabled={step >= maxStep} style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            background: playing ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)',
+            border: `1px solid ${playing ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`,
+            color: playing ? '#ef4444' : 'var(--accent-blue)',
+            padding: '8px 16px', borderRadius: '8px', cursor: step >= maxStep ? 'default' : 'pointer', fontSize: '13px', fontWeight: '500',
+          }}>
+            {playing ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Play</>}
+          </button>
         </div>
       </div>
+
+      {/* Custom prime inputs */}
+      {customMode && (
+        <div style={{
+          background: 'var(--bg-card)', border: '1px solid rgba(168,85,247,0.25)',
+          borderRadius: '12px', padding: '16px', marginBottom: '20px',
+          animation: 'fadeIn 0.2s ease-out',
+        }}>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--accent-purple)', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <KeyRound size={13} /> Enter your own prime numbers
+          </div>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            {[
+              { label: 'p', value: customP, set: setCustomP, status: pStatus },
+              { label: 'q', value: customQ, set: setCustomQ, status: qStatus },
+            ].map(({ label, value, set, status }) => {
+              const isValid = status === 'valid';
+              const isError = status !== 'empty' && status !== 'valid';
+              const borderColor = isValid ? 'rgba(0,255,136,0.4)' : isError ? 'rgba(239,68,68,0.4)' : 'var(--border)';
+              const statusText = {
+                empty: '',
+                invalid: 'Not a valid integer',
+                'too-small': 'Must be ≥ 2',
+                'not-prime': 'Not a prime number',
+                valid: 'Prime ✓',
+              }[status];
+              const statusColor = isValid ? 'var(--accent-green)' : '#ef4444';
+              return (
+                <div key={label} style={{ flex: '1', minWidth: '160px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
+                    Prime {label}
+                  </div>
+                  <input
+                    value={value}
+                    onChange={e => set(e.target.value)}
+                    placeholder={`e.g. ${label === 'p' ? '61' : '53'}`}
+                    style={{
+                      width: '100%', background: 'var(--bg-elevated)',
+                      border: `1px solid ${borderColor}`,
+                      borderRadius: '6px', padding: '8px 12px',
+                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono, monospace', fontSize: '14px',
+                      outline: 'none', transition: 'border-color 0.2s',
+                    }}
+                  />
+                  {statusText && (
+                    <div style={{ fontSize: '11px', color: statusColor, marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
+                      {statusText}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: sameValue || (pStatus !== 'empty' || qStatus !== 'empty') ? '0' : '0' }}>
+              <button
+                onClick={generateFromCustom}
+                disabled={!canApplyCustom}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: canApplyCustom ? 'rgba(168,85,247,0.15)' : 'var(--bg-elevated)',
+                  border: `1px solid ${canApplyCustom ? 'rgba(168,85,247,0.4)' : 'var(--border)'}`,
+                  color: canApplyCustom ? 'var(--accent-purple)' : 'var(--text-muted)',
+                  padding: '8px 16px', borderRadius: '8px',
+                  cursor: canApplyCustom ? 'pointer' : 'default', fontSize: '13px', fontWeight: '500',
+                  marginTop: '20px',
+                }}
+              >
+                <RefreshCw size={13} /> Generate
+              </button>
+            </div>
+          </div>
+          {sameValue && (
+            <div style={{ marginTop: '10px', fontSize: '12px', color: '#ef4444', fontFamily: 'JetBrains Mono, monospace' }}>
+              p and q must be different primes
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Step progress bar */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>

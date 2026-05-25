@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, SkipForward, SkipBack, RefreshCw, Shuffle } from 'lucide-react';
 import { aesEncryptSteps, hexToBytes, stringToBytes, bytesToHex } from '../utils/aes';
 
-const SPEEDS = { slow: 1400, medium: 600, fast: 180 };
+const SPEEDS = { slow: 3500, medium: 1800, fast: 700 };
 
 const OP_LABELS = {
   initial: 'Initial State',
@@ -235,7 +235,7 @@ export default function AESVisualizer() {
   const opColor = currentStep ? OP_COLORS[currentStep.op] : 'var(--text-muted)';
 
   return (
-    <div style={{ maxWidth: '960px' }}>
+    <div style={{ width: '100%' }}>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>
           AES-128 Block Cipher
@@ -321,16 +321,6 @@ export default function AESVisualizer() {
           <SkipBack size={13} /> Back
         </button>
 
-        <button onClick={() => setPlaying(p => !p)} disabled={!steps || stepIdx >= maxIdx} style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          background: playing ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)',
-          border: `1px solid ${playing ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`,
-          color: playing ? '#ef4444' : 'var(--accent-blue)',
-          padding: '7px 14px', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-        }}>
-          {playing ? <><Pause size={13} /> Pause</> : <><Play size={13} /> Play</>}
-        </button>
-
         <button onClick={() => setStepIdx(i => Math.min(maxIdx, i + 1))} disabled={!steps || stepIdx >= maxIdx} style={{
           display: 'flex', alignItems: 'center', gap: '4px',
           background: 'var(--bg-elevated)', border: '1px solid var(--border)',
@@ -356,6 +346,15 @@ export default function AESVisualizer() {
               color: speed === s ? 'var(--accent-purple)' : 'var(--text-muted)',
             }}>{s}</button>
           ))}
+          <button onClick={() => setPlaying(p => !p)} disabled={!steps || stepIdx >= maxIdx} style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            background: playing ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)',
+            border: `1px solid ${playing ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`,
+            color: playing ? '#ef4444' : 'var(--accent-blue)',
+            padding: '7px 14px', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+          }}>
+            {playing ? <><Pause size={13} /> Pause</> : <><Play size={13} /> Play</>}
+          </button>
         </div>
       </div>
 

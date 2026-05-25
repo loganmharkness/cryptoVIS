@@ -139,7 +139,7 @@ export default function HashVisualizer() {
   const diffPct = diffBits != null ? ((diffBits / 256) * 100).toFixed(1) : null;
 
   return (
-    <div style={{ maxWidth: '960px' }}>
+    <div style={{ width: '100%' }}>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: 0, fontFamily: 'JetBrains Mono, monospace' }}>
           SHA-256 & Avalanche Effect
@@ -331,9 +331,7 @@ export default function HashVisualizer() {
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '12px', padding: '10px 14px', background: 'var(--bg-elevated)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-          This app uses <span style={{ color: 'var(--accent-blue)' }}>window.crypto.subtle.digest("SHA-256", …)</span> — the browser's native Web Crypto API. No external library needed.
-        </div>
+        
       </div>
     </div>
   );
