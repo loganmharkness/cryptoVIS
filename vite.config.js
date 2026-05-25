@@ -5,7 +5,6 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/cryptoVIS/',
   build: {
     rollupOptions: {
       input: {
